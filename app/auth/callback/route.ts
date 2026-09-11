@@ -1,38 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
-
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
+  const requestUrl = new URL(request.url);
+  const code = requestUrl.searchParams.get("code");
 
-  const { searchParams, origin } = new URL(request.url);
+  if (code) {
+    const supabase = await createClient();
 
-  const code = searchParams.get("code");
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (!code) {
-
-    return NextResponse.redirect(
-
-      `${origin}/registration?error=no_code`
-
-    );
-
+    if (!error) {
+      return NextResponse.redirect(new URL("/", requestUrl.origin));
+    }
   }
 
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-  if (error) {
-
-    console.error("AUTH CALLBACK ERROR:", error);
-
-    return NextResponse.redirect(
-
-      `${origin}/registration?error=${encodeURIComponent(error.message)}`
-
-    );
-
-  }
-
-  return NextResponse.redirect(`${origin}/`);
+  return NextResponse.redirect(
+    new URL("/register?error=auth", requestUrl.origin)
+  );
 }
