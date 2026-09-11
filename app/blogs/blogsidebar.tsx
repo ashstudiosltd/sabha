@@ -1,16 +1,14 @@
 "use client";
-
 import type { ReactNode } from "react";
-import type { Category, TrendingItem } from "@/data/blog";
-import { categories, tags, trendingBlogs } from "@/data/blog";
+import type { BlogPost, Category, TrendingItem } from "@/data/blog";
+import { categories, tags } from "@/data/blog";
 import CategoryList from "./categorylist";
 import TrendingBlogs from "./trendingblog";
-
 interface BlogSidebarProps {
   active: Category;
   onSelect: (category: Category) => void;
+  posts: BlogPost[];
 }
-
 function SidebarSection({
   title,
   children,
@@ -27,12 +25,21 @@ function SidebarSection({
     </section>
   );
 }
-
-export default function BlogSidebar({ active, onSelect }: BlogSidebarProps) {
+export default function BlogSidebar({
+  active,
+  onSelect,
+  posts,
+}: BlogSidebarProps) {
+  const trendingBlogs: TrendingItem[] = [...posts]
+    .sort((a, b) => b.likes - a.likes)
+    .slice(0, 5)
+    .map((post) => ({
+      id: post.id,
+      title: post.title,
+      authorName: post.author.name,
+      date: post.date,
+    }));
   return (
-    // Sidebar is a desktop/tablet-and-up affair. On mobile its job is taken
-    // over by the bottom icon nav (Explore/Search), so Popular and Tags are
-    // dropped rather than stacked underneath the feed.
     <aside className="hidden lg:sticky lg:top-8 lg:block lg:space-y-9">
       <SidebarSection title="Explore">
         <CategoryList
@@ -42,15 +49,11 @@ export default function BlogSidebar({ active, onSelect }: BlogSidebarProps) {
           variant="list"
         />
       </SidebarSection>
-
       <div className="border-t border-[#E6E3DA]" />
-
       <SidebarSection title="Popular this week">
-        <TrendingBlogs items={trendingBlogs as TrendingItem[]} />
+        <TrendingBlogs items={trendingBlogs} />
       </SidebarSection>
-
       <div className="border-t border-[#E6E3DA]" />
-
       <SidebarSection title="Tags">
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
