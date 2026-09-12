@@ -33,7 +33,7 @@ export default function BlogCard({
   return (
     <>
       <article
-        className="group cursor-pointer border-b border-[#E6E3DA] py-7"
+        className="group cursor-pointer border-b border-white/10 py-7"
         onClick={() => onOpen(post)}
       >
         {/* Author */}
@@ -57,11 +57,11 @@ export default function BlogCard({
           )}
 
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-medium text-[#1B1B18]">
+            <p className="truncate text-[13px] font-medium text-[#F5F3EC]">
               {post.author.name}
             </p>
 
-            <p className="text-[11.5px] text-[#8A8577]">
+            <p className="text-[11.5px] text-[#F5F3EC]/50">
               @{post.author.username} ·{" "}
               {post.date}
             </p>
@@ -72,11 +72,11 @@ export default function BlogCard({
         <div className="mt-4">
           <div className="flex items-start justify-between gap-5">
             <div className="min-w-0">
-              <h2 className="text-[19px] font-semibold leading-[1.3] tracking-[-0.02em] text-[#1B1B18] transition-colors group-hover:text-[#2F4B3C]">
+              <h2 className="text-[19px] font-semibold leading-[1.3] tracking-[-0.02em] text-[#F5F3EC] transition-colors group-hover:text-[#8FBBA0]">
                 {post.title}
               </h2>
 
-              <p className="mt-2 line-clamp-3 text-[13.5px] leading-6 text-[#777268]">
+              <p className="mt-2 line-clamp-3 text-[13.5px] leading-6 text-[#F5F3EC]/60">
                 {post.excerpt}
               </p>
             </div>
@@ -96,7 +96,7 @@ export default function BlogCard({
               {post.tags.slice(0, 4).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-[#F0EEE8] px-2.5 py-1 text-[10.5px] text-[#777268]"
+                  className="rounded-full  px-2.5 py-1 text-[10.5px] text-[#F5F3EC]/60"
                 >
                   #{tag}
                 </span>
@@ -106,12 +106,12 @@ export default function BlogCard({
 
           {/* Footer */}
           <div className="mt-5 flex items-center gap-5">
-            <div className="flex items-center gap-1.5 text-[13px] text-[#8A8577]">
+            <div className="flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50">
               <Heart className="h-[17px] w-[17px]" />
               <span>{post.likes}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[13px] text-[#8A8577]">
+            <div className="flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50">
               <MessageCircle className="h-[17px] w-[17px]" />
               <span>{post.comments}</span>
             </div>
@@ -119,7 +119,7 @@ export default function BlogCard({
             <button
               type="button"
               onClick={handleShare}
-              className="ml-auto flex items-center gap-1.5 text-[13px] text-[#8A8577] transition-all duration-150 hover:text-[#1B1B18] active:scale-90"
+              className="ml-auto flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50 transition-all duration-150 hover:text-[#F5F3EC] active:scale-90"
               aria-label="Share this post"
             >
               <Share2 className="h-[17px] w-[17px]" />

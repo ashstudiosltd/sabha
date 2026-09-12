@@ -2,7 +2,7 @@
 import React from 'react'
 import BlogsPage from './blogspage';
 import Footer from '../sabha/footer';
-import Nav from './nav';
+import Nav from '../sabha/nav';
 const blog= () => {
   return (
     <>

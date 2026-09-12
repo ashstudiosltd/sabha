@@ -45,7 +45,7 @@ export default function ProfileAction({
 
   if (loading) {
     return (
-      <div className="h-9 w-[92px] animate-pulse rounded-full bg-[#E6E3DA]" />
+      <div className="h-9 w-[92px] animate-pulse rounded-full bg-white/10 backdrop-blur-md" />
     );
   }
 
@@ -53,7 +53,7 @@ export default function ProfileAction({
     return (
       <Link
         href="/settings/profile"
-        className="inline-flex w-fit items-center justify-center rounded-full border border-[#1B1B18] px-5 py-2 text-[12.5px] font-medium text-[#1B1B18] transition-all duration-150 hover:bg-[#1B1B18] hover:text-[#FAFAF7] active:scale-95"
+        className="inline-flex w-fit items-center justify-center rounded-full border border-white/30 bg-white/10 px-5 py-2 text-[12.5px] font-medium text-white backdrop-blur-md transition-all duration-150 hover:bg-white/20 active:scale-95"
       >
         Edit Profile
       </Link>

@@ -18,7 +18,7 @@ function SidebarSection({
 }) {
   return (
     <section>
-      <h2 className="mb-3 text-[11.5px] font-medium tracking-[0.08em] text-[#8A8577]">
+      <h2 className="mb-3 text-[11.5px] font-medium tracking-[0.08em] text-[#F5F3EC]/50">
         {title}
       </h2>
       {children}
@@ -40,7 +40,7 @@ export default function BlogSidebar({
       date: post.date,
     }));
   return (
-    <aside className="hidden lg:sticky lg:top-8 lg:block lg:space-y-9">
+    <aside className="hidden bg-transparent lg:sticky lg:top-8 lg:block lg:space-y-9">
       <SidebarSection title="Explore">
         <CategoryList
           categoriesList={categories}
@@ -49,18 +49,18 @@ export default function BlogSidebar({
           variant="list"
         />
       </SidebarSection>
-      <div className="border-t border-[#E6E3DA]" />
+      <div className="border-t border-white/10" />
       <SidebarSection title="Popular this week">
         <TrendingBlogs items={trendingBlogs} />
       </SidebarSection>
-      <div className="border-t border-[#E6E3DA]" />
+      <div className="border-t border-white/10" />
       <SidebarSection title="Tags">
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
             <a
               key={tag}
               href="#"
-              className="rounded-full border border-[#E6E3DA] px-2.5 py-1 text-[12px] text-[#6E6A5F] transition-all duration-150 active:scale-95 hover:border-[#2F4B3C] hover:text-[#2F4B3C]"
+              className="rounded-full border border-white/10 bg-transparent px-2.5 py-1 text-[12px] text-[#F5F3EC]/70 transition-all duration-150 active:scale-95 hover:border-[#8FBBA0] hover:text-[#8FBBA0]"
             >
               #{tag}
             </a>

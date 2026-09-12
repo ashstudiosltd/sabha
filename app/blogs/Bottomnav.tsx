@@ -470,7 +470,7 @@ export default function MobileBottomNav({
 
       {isExpanded && (
         <div
-          className="fixed inset-0 z-30 bg-black/[0.04] transition-opacity duration-200"
+          className="fixed inset-0 z-30 bg-transparent transition-opacity duration-200"
           onClick={closeExpanded}
           aria-hidden="true"
         />
@@ -482,7 +482,7 @@ export default function MobileBottomNav({
         {/* Expanded panels */}
 
         <div
-          className={`mx-auto w-full max-w-[720px] px-4 pb-3 transition-all duration-[220ms] ease-out ${
+          className={`mx-auto w-full max-w-[720px] px-4 pb-3 transition-all duration-[220ms] ease-out transform-gpu will-change-transform ${
             isExpanded
               ? "translate-y-0 scale-100 opacity-100"
               : "pointer-events-none translate-y-3 scale-95 opacity-0"
@@ -495,8 +495,11 @@ export default function MobileBottomNav({
           {/* Search */}
 
           {expanded === "search" && (
-            <div className="flex items-center gap-2 rounded-full border border-[#E6E3DA] bg-[#FAFAF7] px-4 py-2.5 shadow-lg">
-              <SearchIcon className="h-[17px] w-[17px] shrink-0 text-[#8A8577]" />
+            <div className="relative flex items-center gap-2 overflow-hidden rounded-full border border-white/30 bg-white/10 px-4 py-2.5 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.5)] backdrop-blur-2xl backdrop-saturate-150">
+              {/* specular sheen */}
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/40 via-white/[0.04] to-transparent" />
+
+              <SearchIcon className="relative z-10 h-[17px] w-[17px] shrink-0 text-white drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]" />
 
               <input
                 ref={searchInputRef}
@@ -508,14 +511,14 @@ export default function MobileBottomNav({
                   )
                 }
                 placeholder="Search posts, tags, authors"
-                className="w-full bg-transparent text-[14px] text-[#1B1B18] placeholder:text-[#A6A192] focus:outline-none"
+                className="relative z-10 w-full bg-transparent text-[14px] font-medium text-white placeholder:text-white/70 focus:outline-none"
               />
 
               <button
                 type="button"
                 onClick={closeExpanded}
                 aria-label="Close search"
-                className="shrink-0 rounded-full p-1 text-[#8A8577] transition-transform duration-150 active:scale-90"
+                className="relative z-10 shrink-0 rounded-full p-1 text-white transition-transform duration-150 ease-out transform-gpu hover:bg-white/20 active:scale-90"
               >
                 <CloseIcon className="h-[15px] w-[15px]" />
               </button>
@@ -525,9 +528,12 @@ export default function MobileBottomNav({
           {/* New post */}
 
           {expanded === "post" && (
-            <div className="max-h-[78vh] overflow-y-auto rounded-2xl border border-[#E6E3DA] bg-[#FAFAF7] p-3 shadow-lg sm:p-4">
-              <div className="flex items-center justify-between px-1 pb-2">
-                <span className="text-[12.5px] font-medium text-[#1B1B18]">
+            <div className="relative max-h-[78vh] overflow-y-auto rounded-2xl border border-white/30 bg-white/10 p-3 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.35),inset_0_1px_0_0_rgba(255,255,255,0.5)] backdrop-blur-2xl backdrop-saturate-150 sm:p-4">
+              {/* specular sheen */}
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/30 via-white/[0.03] to-transparent" />
+
+              <div className="relative z-10 flex items-center justify-between px-1 pb-2">
+                <span className="text-[12.5px] font-semibold text-white drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
                   New post
                 </span>
 
@@ -536,13 +542,13 @@ export default function MobileBottomNav({
                   onClick={closeExpanded}
                   disabled={publishing}
                   aria-label="Close composer"
-                  className="rounded-full p-1 text-[#8A8577] transition-transform duration-150 active:scale-90 disabled:opacity-40"
+                  className="rounded-full p-1 text-white transition-transform duration-150 ease-out transform-gpu hover:bg-white/20 active:scale-90 disabled:opacity-40"
                 >
                   <CloseIcon className="h-[15px] w-[15px]" />
                 </button>
               </div>
 
-              <div className="space-y-2.5">
+              <div className="relative z-10 space-y-2.5">
                 <input
                   ref={titleInputRef}
                   type="text"
@@ -555,7 +561,7 @@ export default function MobileBottomNav({
                   placeholder="Post title"
                   maxLength={140}
                   disabled={publishing}
-                  className="w-full rounded-xl border border-[#E6E3DA] bg-transparent px-3 py-2.5 text-[14px] font-medium text-[#1B1B18] placeholder:text-[#A6A192] focus:border-[#2F4B3C] focus:outline-none disabled:opacity-60"
+                  className="w-full rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-[14px] font-medium text-white placeholder:text-white/70 backdrop-blur-md transition-colors duration-150 focus:border-white/60 focus:bg-white/20 focus:outline-none disabled:opacity-60"
                 />
 
                 <textarea
@@ -569,7 +575,7 @@ export default function MobileBottomNav({
                   maxLength={300}
                   rows={2}
                   disabled={publishing}
-                  className="w-full resize-none rounded-xl border border-[#E6E3DA] bg-transparent px-3 py-2.5 text-[13.5px] text-[#1B1B18] placeholder:text-[#A6A192] focus:border-[#2F4B3C] focus:outline-none disabled:opacity-60"
+                  className="w-full resize-none rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-[13.5px] text-white placeholder:text-white/70 backdrop-blur-md transition-colors duration-150 focus:border-white/60 focus:bg-white/20 focus:outline-none disabled:opacity-60"
                 />
 
                 <textarea
@@ -582,7 +588,7 @@ export default function MobileBottomNav({
                   placeholder="Write your post…"
                   rows={6}
                   disabled={publishing}
-                  className="w-full resize-none rounded-xl border border-[#E6E3DA] bg-transparent px-3 py-2.5 text-[13.5px] leading-6 text-[#1B1B18] placeholder:text-[#A6A192] focus:border-[#2F4B3C] focus:outline-none disabled:opacity-60"
+                  className="w-full resize-none rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-[13.5px] leading-6 text-white placeholder:text-white/70 backdrop-blur-md transition-colors duration-150 focus:border-white/60 focus:bg-white/20 focus:outline-none disabled:opacity-60"
                 />
 
                 <div className="grid grid-cols-2 gap-2">
@@ -595,7 +601,7 @@ export default function MobileBottomNav({
                       )
                     }
                     disabled={publishing}
-                    className="w-full rounded-xl border border-[#E6E3DA] bg-[#FAFAF7] px-3 py-2.5 text-[12.5px] text-[#1B1B18] focus:border-[#2F4B3C] focus:outline-none disabled:opacity-60"
+                    className="w-full rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-[12.5px] text-white placeholder:text-white/70 backdrop-blur-md transition-colors duration-150 focus:border-white/60 focus:bg-white/20 focus:outline-none disabled:opacity-60"
                   >
                     {postCategories.map(
                       (item) => (
@@ -619,21 +625,21 @@ export default function MobileBottomNav({
                     }
                     placeholder="tags, comma separated"
                     disabled={publishing}
-                    className="w-full min-w-0 rounded-xl border border-[#E6E3DA] bg-transparent px-3 py-2.5 text-[12.5px] text-[#1B1B18] placeholder:text-[#A6A192] focus:border-[#2F4B3C] focus:outline-none disabled:opacity-60"
+                    className="w-full min-w-0 rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-[12.5px] text-white placeholder:text-white/70 backdrop-blur-md transition-colors duration-150 focus:border-white/60 focus:bg-white/20 focus:outline-none disabled:opacity-60"
                   />
                 </div>
 
                 {error && (
                   <div
                     role="alert"
-                    className="rounded-xl border border-[#E6E3DA] bg-[#F3F0E9] px-3 py-2 text-[12px] leading-5 text-[#7A2E2E]"
+                    className="rounded-xl border border-red-300/40 bg-red-500/10 px-3 py-2 text-[12px] leading-5 text-[#7A2E2E] backdrop-blur-md"
                   >
                     {error}
                   </div>
                 )}
 
                 <div className="flex items-center justify-between gap-3 pt-0.5">
-                  <span className="text-[11px] text-[#A6A192]">
+                  <span className="text-[11px] text-[#5B5748]/80">
                     ~
                     {Math.max(
                       1,
@@ -654,11 +660,14 @@ export default function MobileBottomNav({
                     type="button"
                     onClick={handlePublish}
                     disabled={publishing}
-                    className="rounded-full bg-[#1B1B18] px-4 py-1.5 text-[12.5px] font-medium text-[#FAFAF7] transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="relative overflow-hidden rounded-full border border-white/20 bg-[#1B1B18]/80 px-4 py-1.5 text-[12.5px] font-medium text-[#FAFAF7] backdrop-blur-md transition-all duration-150 ease-out transform-gpu active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {publishing
-                      ? "Publishing…"
-                      : "Publish"}
+                    <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
+                    <span className="relative z-10">
+                      {publishing
+                        ? "Publishing…"
+                        : "Publish"}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -680,13 +689,16 @@ export default function MobileBottomNav({
 
         <nav
           aria-label="Primary"
-          className="border-t border-[#E6E3DA] bg-[#FAFAF7]/95 backdrop-blur"
+          className="relative overflow-hidden border-t border-white/20 bg-white/[0.08] backdrop-blur-2xl backdrop-saturate-150"
           style={{
             paddingBottom:
               "env(safe-area-inset-bottom)",
           }}
         >
-          <ul className="mx-auto grid max-w-[720px] grid-cols-4">
+          {/* specular sheen across the whole bar */}
+          <span className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/25 via-white/[0.02] to-transparent" />
+
+          <ul className="relative z-10 mx-auto grid max-w-[720px] grid-cols-4">
             {tabs.map(
               ({ id, label }) => {
                 const isActive =
@@ -705,13 +717,23 @@ export default function MobileBottomNav({
                           : undefined
                       }
                       aria-label={label}
-                      className="flex w-full flex-col items-center gap-1 py-3 transition-transform duration-150 active:scale-90"
+                      className="group relative flex w-full flex-col items-center gap-1 py-3 transition-transform duration-150 ease-out transform-gpu active:scale-90"
                     >
+                      {/* glow pill behind the active icon — transform/opacity only, GPU friendly */}
+                      <span
+                        aria-hidden="true"
+                        className={`absolute top-1 h-8 w-8 rounded-full bg-gradient-to-br from-white/70 to-white/10 blur-md transition-all duration-300 ease-out transform-gpu will-change-transform ${
+                          isActive
+                            ? "scale-100 opacity-100"
+                            : "scale-50 opacity-0 group-hover:scale-75 group-hover:opacity-50"
+                        }`}
+                      />
+
                       {id === "profile" ? (
                         <div
-                          className={`relative h-[22px] w-[22px] overflow-hidden rounded-full transition-all duration-150 ${
+                          className={`relative z-10 h-[22px] w-[22px] overflow-hidden rounded-full border border-white/40 transition-all duration-150 ease-out transform-gpu ${
                             isActive
-                              ? "ring-2 ring-[#2F4B3C] ring-offset-2 ring-offset-[#FAFAF7]"
+                              ? "ring-2 ring-white/70 ring-offset-2 ring-offset-transparent"
                               : ""
                           }`}
                         >
@@ -725,7 +747,7 @@ export default function MobileBottomNav({
                               referrerPolicy="no-referrer"
                             />
                           ) : profile ? (
-                            <div className="flex h-full w-full items-center justify-center bg-[#2F4B3C] text-[9px] font-medium text-[#FAFAF7]">
+                            <div className="flex h-full w-full items-center justify-center bg-[#2F4B3C]/80 text-[9px] font-medium text-[#FAFAF7] backdrop-blur-md">
                               {profile.name
                                 .trim()
                                 .slice(
@@ -735,40 +757,40 @@ export default function MobileBottomNav({
                                 .toUpperCase()}
                             </div>
                           ) : (
-                            <div className="h-full w-full animate-pulse bg-[#E6E3DA]" />
+                            <div className="h-full w-full animate-pulse bg-white/20" />
                           )}
                         </div>
                       ) : id === "feed" ? (
                         <GridDotsIcon
-                          className={`h-[22px] w-[22px] transition-colors duration-150 ${
+                          className={`relative z-10 h-[22px] w-[22px] transition-colors duration-150 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)] ${
                             isActive
-                              ? "text-[#1B1B18]"
-                              : "text-[#A6A192]"
+                              ? "text-white"
+                              : "text-[#5B5748]/70"
                           }`}
                         />
                       ) : id === "search" ? (
                         <SearchIcon
-                          className={`h-[22px] w-[22px] transition-colors duration-150 ${
+                          className={`relative z-10 h-[22px] w-[22px] transition-colors duration-150 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)] ${
                             isActive
-                              ? "text-[#1B1B18]"
-                              : "text-[#A6A192]"
+                              ? "text-white"
+                              : "text-[#5B5748]/70"
                           }`}
                         />
                       ) : (
                         <PlusIcon
-                          className={`h-[22px] w-[22px] transition-colors duration-150 ${
+                          className={`relative z-10 h-[22px] w-[22px] transition-colors duration-150 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)] ${
                             isActive
-                              ? "text-[#1B1B18]"
-                              : "text-[#A6A192]"
+                              ? "text-white"
+                              : "text-[#5B5748]/70"
                           }`}
                         />
                       )}
 
                       <span
-                        className={`h-1 w-1 rounded-full transition-colors duration-150 ${
+                        className={`relative z-10 h-1 w-1 rounded-full transition-all duration-150 ease-out transform-gpu ${
                           isActive
-                            ? "bg-[#2F4B3C]"
-                            : "bg-transparent"
+                            ? "scale-100 bg-[#2F4B3C] opacity-100"
+                            : "scale-0 bg-transparent opacity-0"
                         }`}
                       />
                     </button>

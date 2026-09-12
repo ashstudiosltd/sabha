@@ -39,6 +39,15 @@ export default async function Image({
     "https://sabha.devvrats.in"
   );
 
+  /*
+   * Ambient backdrop, matching the blog post page.
+   * Change this path ONLY if the file lives elsewhere in /public.
+   */
+  const bgUrl = new URL(
+    "/login-bg.jpg",
+    "https://sabha.devvrats.in"
+  );
+
   if (!post) {
     return new ImageResponse(
       (
@@ -47,47 +56,69 @@ export default async function Image({
             width: "100%",
             height: "100%",
             display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            padding: "80px",
-            background: "#FAFAF7",
-            color: "#1B1B18",
+            position: "relative",
+            backgroundImage: `url(${bgUrl.toString()})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         >
           <div
             style={{
+              position: "absolute",
+              inset: 0,
               display: "flex",
-              alignItems: "center",
-              gap: 16,
+              background:
+                "linear-gradient(180deg, rgba(11,7,20,0.72) 0%, rgba(11,7,20,0.55) 45%, rgba(11,7,20,0.82) 100%)",
             }}
-          >
-            <img
-              src={logoUrl.toString()}
-              width="52"
-              height="52"
-              style={{
-                objectFit: "contain",
-              }}
-            />
-
-            <div
-              style={{
-                fontSize: 30,
-                fontWeight: 700,
-              }}
-            >
-              Devvrats
-            </div>
-          </div>
+          />
 
           <div
             style={{
-              marginTop: 18,
-              fontSize: 72,
-              fontWeight: 700,
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              padding: "80px",
+              width: "100%",
+              height: "100%",
+              color: "#FAFAF7",
             }}
           >
-            Sabha
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              <img
+                src={logoUrl.toString()}
+                width="52"
+                height="52"
+                style={{
+                  objectFit: "contain",
+                }}
+              />
+
+              <div
+                style={{
+                  fontSize: 30,
+                  fontWeight: 700,
+                }}
+              >
+                Devvrats
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: 18,
+                fontSize: 72,
+                fontWeight: 700,
+              }}
+            >
+              Sabha
+            </div>
           </div>
         </div>
       ),
@@ -102,154 +133,182 @@ export default async function Image({
           width: "100%",
           height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "64px 72px",
-          background: "#FAFAF7",
-          color: "#1B1B18",
-          border: "1px solid #E6E3DA",
+          position: "relative",
+          backgroundImage: `url(${bgUrl.toString()})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       >
-        {/* HEADER */}
+        {/* SCRIM */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            background:
+              "linear-gradient(180deg, rgba(11,7,20,0.72) 0%, rgba(11,7,20,0.42) 45%, rgba(11,7,20,0.8) 100%)",
+          }}
+        />
 
         <div
           style={{
+            position: "relative",
             display: "flex",
+            flexDirection: "column",
             justifyContent: "space-between",
-            alignItems: "center",
+            padding: "56px 64px",
+            width: "100%",
+            height: "100%",
           }}
         >
-          {/* DEVVRATS BRAND */}
+          {/* HEADER */}
 
           <div
             style={{
               display: "flex",
+              justifyContent: "space-between",
               alignItems: "center",
-              gap: 14,
             }}
           >
-            <img
-              src={logoUrl.toString()}
-              width="46"
-              height="46"
-              style={{
-                objectFit: "contain",
-              }}
-            />
+            {/* DEVVRATS BRAND */}
 
             <div
               style={{
-                fontSize: 28,
-                fontWeight: 700,
-                letterSpacing: -0.5,
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
               }}
             >
-              Devvrats
+              <img
+                src={logoUrl.toString()}
+                width="46"
+                height="46"
+                style={{
+                  objectFit: "contain",
+                }}
+              />
+
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  letterSpacing: -0.5,
+                  color: "#FAFAF7",
+                }}
+              >
+                Devvrats
+              </div>
+            </div>
+
+            {/* SABHA */}
+
+            <div
+              style={{
+                fontSize: 22,
+                color: "#D8D4C8",
+                letterSpacing: 1,
+              }}
+            >
+              Sabha
             </div>
           </div>
 
-          {/* SABHA */}
+          {/* POST CONTENT CARD */}
 
-          <div
-            style={{
-              fontSize: 22,
-              color: "#8A8577",
-              letterSpacing: 1,
-            }}
-          >
-            Sabha
-          </div>
-        </div>
-
-        {/* POST CONTENT */}
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            maxWidth: 1000,
-          }}
-        >
-          <div
-            style={{
-              fontSize: 22,
-              color: "#6E4B2A",
-              fontWeight: 600,
-              marginBottom: 22,
-            }}
-          >
-            {post.category}
-          </div>
-
-          <div
-            style={{
-              fontSize:
-                post.title.length > 65
-                  ? 48
-                  : 58,
-              lineHeight: 1.08,
-              fontWeight: 700,
-              letterSpacing: -1.5,
-            }}
-          >
-            {post.title}
-          </div>
-
-          <div
-            style={{
-              marginTop: 24,
-              fontSize: 25,
-              lineHeight: 1.4,
-              color: "#777268",
-              maxWidth: 900,
-            }}
-          >
-            {post.excerpt}
-          </div>
-        </div>
-
-        {/* FOOTER */}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-          }}
-        >
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 7,
+              maxWidth: 1040,
+              background: "rgba(250,250,247,0.94)",
+              border: "1px solid rgba(230,227,218,0.9)",
+              borderRadius: 24,
+              padding: "40px 48px",
             }}
           >
             <div
               style={{
-                fontSize: 21,
+                fontSize: 20,
+                color: "#6E4B2A",
                 fontWeight: 600,
+                marginBottom: 18,
               }}
             >
-              {post.author.name}
+              {post.category}
             </div>
 
             <div
               style={{
-                fontSize: 18,
-                color: "#8A8577",
+                fontSize:
+                  post.title.length > 65
+                    ? 44
+                    : 54,
+                lineHeight: 1.08,
+                fontWeight: 700,
+                letterSpacing: -1.5,
+                color: "#1B1B18",
               }}
             >
-              {post.readTime}
+              {post.title}
+            </div>
+
+            <div
+              style={{
+                marginTop: 20,
+                fontSize: 23,
+                lineHeight: 1.4,
+                color: "#777268",
+                maxWidth: 900,
+              }}
+            >
+              {post.excerpt}
             </div>
           </div>
 
+          {/* FOOTER */}
+
           <div
             style={{
-              fontSize: 20,
-              color: "#8A8577",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
             }}
           >
-            sabha.devvrats.in
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 7,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 21,
+                  fontWeight: 600,
+                  color: "#FAFAF7",
+                }}
+              >
+                {post.author.name}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 18,
+                  color: "#D8D4C8",
+                }}
+              >
+                {post.readTime}
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontSize: 20,
+                color: "#D8D4C8",
+              }}
+            >
+              sabha.devvrats.in
+            </div>
           </div>
         </div>
       </div>

@@ -206,7 +206,7 @@ export default function BlogsPage() {
 
   return (
 
-    <div className="min-h-screen bg-[#FAFAF7] text-[#1B1B18]">
+    <div className="min-h-screen  text-[#F5F3EC]">
 
       {/* Top spacing for existing site navigation */}
 
@@ -228,7 +228,7 @@ export default function BlogsPage() {
 
             {loading ? (
 
-              <div className="py-16 text-center text-sm text-[#8A8577]">
+              <div className="py-16 text-center text-sm text-[#F5F3EC]/50">
 
                 Loading posts...
 

@@ -47,24 +47,24 @@ export default function ProfileQuickCard({
 
   if (loading) {
     return (
-      <div className="w-full rounded-2xl border border-[#E6E3DA] bg-[#FAFAF7] p-4 shadow-xl">
+      <div className="w-full rounded-2xl border border-white/15 bg-white/10 p-4 shadow-xl backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 animate-pulse rounded-full bg-[#E6E3DA]" />
+          <div className="h-12 w-12 animate-pulse rounded-full bg-white/15" />
 
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-3.5 w-32 animate-pulse rounded bg-[#E6E3DA]" />
-            <div className="h-3 w-24 animate-pulse rounded bg-[#E6E3DA]" />
+            <div className="h-3.5 w-32 animate-pulse rounded bg-white/15" />
+            <div className="h-3 w-24 animate-pulse rounded bg-white/15" />
           </div>
         </div>
 
-        <div className="mt-4 h-3 w-full animate-pulse rounded bg-[#E6E3DA]" />
-        <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-[#E6E3DA]" />
+        <div className="mt-4 h-3 w-full animate-pulse rounded bg-white/15" />
+        <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-white/15" />
 
         <div className="mt-4 grid grid-cols-4 gap-1.5">
-          <div className="h-12 animate-pulse rounded-xl bg-[#E6E3DA]" />
-          <div className="h-12 animate-pulse rounded-xl bg-[#E6E3DA]" />
-          <div className="h-12 animate-pulse rounded-xl bg-[#E6E3DA]" />
-          <div className="h-12 animate-pulse rounded-xl bg-[#E6E3DA]" />
+          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
+          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
+          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
+          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
         </div>
       </div>
     );
@@ -72,8 +72,8 @@ export default function ProfileQuickCard({
 
   if (!profile) {
     return (
-      <div className="w-full rounded-2xl border border-[#E6E3DA] bg-[#FAFAF7] p-4 shadow-xl">
-        <p className="text-[13px] text-[#7A2E2E]">
+      <div className="w-full rounded-2xl border border-white/15 bg-white/10 p-4 shadow-xl backdrop-blur-md">
+        <p className="text-[13px] text-red-300">
           Unable to load this profile.
         </p>
       </div>
@@ -96,7 +96,7 @@ export default function ProfileQuickCard({
 
   return (
     <div
-      className="w-full rounded-2xl border border-[#E6E3DA] bg-[#FAFAF7] p-4 shadow-xl"
+      className="w-full rounded-2xl border border-white/15 bg-white/10 p-4 shadow-xl backdrop-blur-md"
       onClick={(event) => event.stopPropagation()}
     >
       {/* Header */}
@@ -106,11 +106,11 @@ export default function ProfileQuickCard({
           <img
             src={profile.avatarUrl}
             alt={profile.name}
-            className="h-12 w-12 shrink-0 rounded-full border border-[#E6E3DA] object-cover"
+            className="h-12 w-12 shrink-0 rounded-full border border-white/20 object-cover"
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#2F4B3C] text-[12px] font-medium text-[#FAFAF7]">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-[12px] font-medium text-white">
             {initials || "U"}
           </div>
         )}
@@ -119,7 +119,7 @@ export default function ProfileQuickCard({
           <Link
             href={`/profile/${profile.username}`}
             onClick={onClose}
-            className="block truncate text-[14px] font-medium text-[#1B1B18] transition-colors hover:text-[#2F4B3C]"
+            className="block truncate text-[14px] font-medium text-white transition-colors hover:text-white/80"
           >
             {profile.name}
           </Link>
@@ -127,7 +127,7 @@ export default function ProfileQuickCard({
           <Link
             href={`/profile/${profile.username}`}
             onClick={onClose}
-            className="block truncate text-[12px] text-[#8A8577] transition-colors hover:text-[#2F4B3C]"
+            className="block truncate text-[12px] text-white/60 transition-colors hover:text-white/90"
           >
             @{profile.username}
           </Link>
@@ -136,20 +136,20 @@ export default function ProfileQuickCard({
           {(profile.role || profile.status) && (
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               {profile.role && (
-                <span className="truncate text-[11px] text-[#6E6A5F]">
+                <span className="truncate text-[11px] text-white/70">
                   {profile.role}
                 </span>
               )}
 
               {profile.role && profile.status && (
-                <span className="text-[10px] text-[#B0ACA1]">
+                <span className="text-[10px] text-white/40">
                   ·
                 </span>
               )}
 
               {profile.status && (
-                <span className="inline-flex max-w-[120px] items-center gap-1 truncate text-[11px] text-[#2F4B3C]">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#2F4B3C]" />
+                <span className="inline-flex max-w-[120px] items-center gap-1 truncate text-[11px] text-white/90">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white" />
                   <span className="truncate">
                     {profile.status}
                   </span>
@@ -164,7 +164,7 @@ export default function ProfileQuickCard({
             type="button"
             onClick={onClose}
             aria-label="Close profile"
-            className="shrink-0 rounded-full px-2 py-1 text-[11px] text-[#8A8577] transition-colors hover:bg-[#F2F1EA] hover:text-[#1B1B18]"
+            className="shrink-0 rounded-full px-2 py-1 text-[11px] text-white/60 transition-colors hover:bg-white/15 hover:text-white"
           >
             Close
           </button>
@@ -174,7 +174,7 @@ export default function ProfileQuickCard({
       {/* Bio */}
 
       {profile.bio && (
-        <p className="mt-3 line-clamp-3 text-[13px] leading-5 text-[#5B5748]">
+        <p className="mt-3 line-clamp-3 text-[13px] leading-5 text-white/80">
           {profile.bio}
         </p>
       )}
@@ -186,14 +186,14 @@ export default function ProfileQuickCard({
           {skills.slice(0, 4).map((skill) => (
             <span
               key={skill}
-              className="rounded-full bg-[#F0EEE7] px-2.5 py-1 text-[10.5px] text-[#6E6A5F]"
+              className="rounded-full bg-white/15 px-2.5 py-1 text-[10.5px] text-white/80"
             >
               {skill}
             </span>
           ))}
 
           {skills.length > 4 && (
-            <span className="rounded-full border border-[#E6E3DA] px-2.5 py-1 text-[10.5px] text-[#8A8577]">
+            <span className="rounded-full border border-white/20 px-2.5 py-1 text-[10.5px] text-white/60">
               +{skills.length - 4}
             </span>
           )}
@@ -203,42 +203,42 @@ export default function ProfileQuickCard({
       {/* Stats */}
 
       <div className="mt-4 grid grid-cols-4 gap-1.5">
-        <div className="rounded-xl border border-[#E6E3DA] px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-[#1B1B18]">
+        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
+          <p className="text-[13px] font-medium text-white">
             {profile.postsCount}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-[#8A8577]">
+          <p className="mt-0.5 text-[10px] text-white/60">
             Posts
           </p>
         </div>
 
-        <div className="rounded-xl border border-[#E6E3DA] px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-[#1B1B18]">
+        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
+          <p className="text-[13px] font-medium text-white">
             {profile.followersCount}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-[#8A8577]">
+          <p className="mt-0.5 text-[10px] text-white/60">
             Followers
           </p>
         </div>
 
-        <div className="rounded-xl border border-[#E6E3DA] px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-[#1B1B18]">
+        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
+          <p className="text-[13px] font-medium text-white">
             {profile.followingCount}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-[#8A8577]">
+          <p className="mt-0.5 text-[10px] text-white/60">
             Following
           </p>
         </div>
 
-        <div className="rounded-xl border border-[#E6E3DA] px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-[#1B1B18]">
+        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
+          <p className="text-[13px] font-medium text-white">
             {profile.likesReceived}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-[#8A8577]">
+          <p className="mt-0.5 text-[10px] text-white/60">
             Likes
           </p>
         </div>
@@ -255,7 +255,7 @@ export default function ProfileQuickCard({
         <Link
           href={`/profile/${profile.username}`}
           onClick={onClose}
-          className="inline-flex flex-1 items-center justify-center rounded-full border border-[#E6E3DA] px-4 py-2 text-[12px] font-medium text-[#1B1B18] transition-all duration-150 hover:border-[#1B1B18] hover:bg-[#1B1B18] hover:text-[#FAFAF7] active:scale-95"
+          className="inline-flex flex-1 items-center justify-center rounded-full border border-white/20 px-4 py-2 text-[12px] font-medium text-white transition-all duration-150 hover:border-white hover:bg-white hover:text-[#1B1B18] active:scale-95"
         >
           View Profile
         </Link>

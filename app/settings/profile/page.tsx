@@ -160,7 +160,7 @@ export default function EditProfilePage() {
   >(
     field: K,
     value: ProfileForm[K]
-  ) => {
+  ): void => {
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -296,21 +296,21 @@ export default function EditProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#FAFAF7] px-4 py-8">
+      <main className="min-h-screen bg-transparent px-4 py-8">
         <div className="mx-auto w-full max-w-2xl">
-          <div className="h-5 w-32 animate-pulse rounded bg-[#E6E3DA]" />
+          <div className="h-5 w-32 animate-pulse rounded bg-white/15" />
 
-          <div className="mt-8 rounded-3xl border border-[#E6E3DA] bg-white p-6">
-            <div className="h-7 w-48 animate-pulse rounded bg-[#E6E3DA]" />
+          <div className="mt-8 rounded-3xl border border-white/15 bg-white/10 p-6 backdrop-blur-md">
+            <div className="h-7 w-48 animate-pulse rounded bg-white/15" />
 
             <div className="mt-8 flex justify-center">
-              <div className="h-24 w-24 animate-pulse rounded-full bg-[#E6E3DA]" />
+              <div className="h-24 w-24 animate-pulse rounded-full bg-white/15" />
             </div>
 
             <div className="mt-8 space-y-6">
-              <div className="h-11 animate-pulse rounded-xl bg-[#E6E3DA]" />
-              <div className="h-11 animate-pulse rounded-xl bg-[#E6E3DA]" />
-              <div className="h-28 animate-pulse rounded-xl bg-[#E6E3DA]" />
+              <div className="h-11 animate-pulse rounded-xl bg-white/15" />
+              <div className="h-11 animate-pulse rounded-xl bg-white/15" />
+              <div className="h-28 animate-pulse rounded-xl bg-white/15" />
             </div>
           </div>
         </div>
@@ -319,36 +319,36 @@ export default function EditProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAFAF7] px-4 py-8 pb-24">
+    <main className="min-h-screen bg-transparent px-4 py-8 pb-24">
       <div className="mx-auto w-full max-w-2xl">
         {/* Header */}
 
         <div className="flex items-center justify-between">
           <Link
             href={`/profile/${form.username}`}
-            className="text-[13px] font-medium text-[#5B5748] transition-colors hover:text-[#1B1B18]"
+            className="text-[13px] font-medium text-white/70 transition-colors hover:text-white"
           >
             ← Back to profile
           </Link>
 
-          <span className="text-[11px] uppercase tracking-[0.16em] text-[#A09B8D]">
+          <span className="text-[11px] uppercase tracking-[0.16em] text-white/50">
             Settings
           </span>
         </div>
 
         {/* Main card */}
 
-        <div className="mt-6 rounded-3xl border border-[#E6E3DA] bg-white p-5 shadow-sm sm:p-7">
+        <div className="mt-6 rounded-3xl border border-white/15 bg-white/10 p-5 shadow-sm backdrop-blur-md sm:p-7">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#8A8577]">
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/60">
               Profile
             </p>
 
-            <h1 className="mt-2 text-2xl font-medium tracking-tight text-[#1B1B18]">
+            <h1 className="mt-2 text-2xl font-medium tracking-tight text-white">
               Edit your profile
             </h1>
 
-            <p className="mt-2 max-w-lg text-[13px] leading-5 text-[#777264]">
+            <p className="mt-2 max-w-lg text-[13px] leading-5 text-white/70">
               Keep your public identity up to date.
               Changes here will appear across Sabha.
             </p>
@@ -364,19 +364,19 @@ export default function EditProfilePage() {
 
             <section>
               <div className="mb-4">
-                <h2 className="text-[14px] font-medium text-[#1B1B18]">
+                <h2 className="text-[14px] font-medium text-white">
                   Profile photo
                 </h2>
 
-                <p className="mt-1 text-[12px] text-[#8A8577]">
+                <p className="mt-1 text-[12px] text-white/60">
                   Your Google or GitHub photo is used
                   by default. You can replace it with
                   your own photo.
                 </p>
               </div>
 
-              <div className="flex flex-col items-center gap-4 rounded-2xl border border-[#E6E3DA] bg-[#FAFAF7] p-5 sm:flex-row">
-                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-[#E6E3DA] bg-[#E6E3DA]">
+              <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/15 bg-white/5 p-5 sm:flex-row">
+                <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-white/15 bg-white/15">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
@@ -385,7 +385,7 @@ export default function EditProfilePage() {
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-[#2F4B3C] text-2xl font-medium text-[#FAFAF7]">
+                    <div className="flex h-full w-full items-center justify-center bg-white/15 text-2xl font-medium text-white">
                       {form.name
                         .trim()
                         .slice(0, 1)
@@ -404,14 +404,14 @@ export default function EditProfilePage() {
                 </div>
 
                 <div className="min-w-0 flex-1 text-center sm:text-left">
-                  <p className="text-[13px] font-medium text-[#1B1B18]">
+                  <p className="text-[13px] font-medium text-white">
                     {avatarUrl ===
                     providerAvatarUrl
                       ? "Account photo"
                       : "Custom profile photo"}
                   </p>
 
-                  <p className="mt-1 text-[11px] leading-5 text-[#8A8577]">
+                  <p className="mt-1 text-[11px] leading-5 text-white/60">
                     JPG, PNG or WebP. Maximum size
                     5 MB.
                   </p>
@@ -423,7 +423,7 @@ export default function EditProfilePage() {
                         fileInputRef.current?.click()
                       }
                       disabled={avatarLoading}
-                      className="rounded-full bg-[#1B1B18] px-4 py-2 text-[11.5px] font-medium text-[#FAFAF7] transition-all hover:bg-[#2F4B3C] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="rounded-full bg-white px-4 py-2 text-[11.5px] font-medium text-[#1B1B18] transition-all hover:bg-white/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       Change photo
                     </button>
@@ -439,7 +439,7 @@ export default function EditProfilePage() {
                           disabled={
                             avatarLoading
                           }
-                          className="rounded-full border border-[#E6E3DA] px-4 py-2 text-[11.5px] font-medium text-[#5B5748] transition-all hover:border-[#7A2E2E] hover:text-[#7A2E2E] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-full border border-white/20 px-4 py-2 text-[11.5px] font-medium text-white/70 transition-all hover:border-red-300 hover:text-red-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Use account photo
                         </button>
@@ -465,11 +465,11 @@ export default function EditProfilePage() {
 
             <section>
               <div className="mb-4">
-                <h2 className="text-[14px] font-medium text-[#1B1B18]">
+                <h2 className="text-[14px] font-medium text-white">
                   Identity
                 </h2>
 
-                <p className="mt-1 text-[12px] text-[#8A8577]">
+                <p className="mt-1 text-[12px] text-white/60">
                   How people will recognize you.
                 </p>
               </div>
@@ -491,13 +491,13 @@ export default function EditProfilePage() {
                 <div>
                   <label
                     htmlFor="username"
-                    className="mb-2 block text-[12px] font-medium text-[#4F4B40]"
+                    className="mb-2 block text-[12px] font-medium text-white/80"
                   >
                     Username
                   </label>
 
-                  <div className="flex overflow-hidden rounded-xl border border-[#E6E3DA] bg-[#FAFAF7] transition-colors focus-within:border-[#2F4B3C]">
-                    <span className="flex items-center pl-3 text-[13px] text-[#A09B8D]">
+                  <div className="flex overflow-hidden rounded-xl border border-white/15 bg-white/10 backdrop-blur-md transition-colors focus-within:border-white/40">
+                    <span className="flex items-center pl-3 text-[13px] text-white/50">
                       @
                     </span>
 
@@ -516,11 +516,11 @@ export default function EditProfilePage() {
                       autoCapitalize="none"
                       autoCorrect="off"
                       spellCheck={false}
-                      className="w-full bg-transparent px-2 py-3 text-[13px] text-[#1B1B18] outline-none placeholder:text-[#B0AB9D]"
+                      className="w-full bg-transparent px-2 py-3 text-[13px] text-white outline-none placeholder:text-white/40"
                     />
                   </div>
 
-                  <p className="mt-1.5 text-[11px] text-[#969082]">
+                  <p className="mt-1.5 text-[11px] text-white/50">
                     Your username is also your public
                     profile URL.
                   </p>
@@ -529,7 +529,7 @@ export default function EditProfilePage() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="mb-2 block text-[12px] font-medium text-[#4F4B40]"
+                    className="mb-2 block text-[12px] font-medium text-white/80"
                   >
                     Account email
                   </label>
@@ -539,10 +539,10 @@ export default function EditProfilePage() {
                     type="email"
                     value={form.email}
                     readOnly
-                    className="w-full rounded-xl border border-[#E6E3DA] bg-[#F2F1EA] px-3 py-3 text-[13px] text-[#777264] outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-3 text-[13px] text-white/60 outline-none"
                   />
 
-                  <p className="mt-1.5 text-[11px] text-[#969082]">
+                  <p className="mt-1.5 text-[11px] text-white/50">
                     Your account email is managed by
                     your authentication provider.
                   </p>
@@ -556,11 +556,11 @@ export default function EditProfilePage() {
 
             <section>
               <div className="mb-4">
-                <h2 className="text-[14px] font-medium text-[#1B1B18]">
+                <h2 className="text-[14px] font-medium text-white">
                   About you
                 </h2>
 
-                <p className="mt-1 text-[12px] text-[#8A8577]">
+                <p className="mt-1 text-[12px] text-white/60">
                   Tell the community a little about
                   yourself.
                 </p>
@@ -615,11 +615,11 @@ export default function EditProfilePage() {
 
             <section>
               <div className="mb-4">
-                <h2 className="text-[14px] font-medium text-[#1B1B18]">
+                <h2 className="text-[14px] font-medium text-white">
                   Developer profile
                 </h2>
 
-                <p className="mt-1 text-[12px] text-[#8A8577]">
+                <p className="mt-1 text-[12px] text-white/60">
                   Share what you work with and what
                   interests you.
                 </p>
@@ -662,11 +662,11 @@ export default function EditProfilePage() {
 
             <section>
               <div className="mb-4">
-                <h2 className="text-[14px] font-medium text-[#1B1B18]">
+                <h2 className="text-[14px] font-medium text-white">
                   Links & location
                 </h2>
 
-                <p className="mt-1 text-[12px] text-[#8A8577]">
+                <p className="mt-1 text-[12px] text-white/60">
                   Optional information for your public
                   profile.
                 </p>
@@ -690,7 +690,7 @@ export default function EditProfilePage() {
                 <div>
                   <label
                     htmlFor="location"
-                    className="mb-2 block text-[12px] font-medium text-[#4F4B40]"
+                    className="mb-2 block text-[12px] font-medium text-white/80"
                   >
                     Location
                   </label>
@@ -707,7 +707,7 @@ export default function EditProfilePage() {
                     }
                     placeholder="e.g. Haryana, India"
                     maxLength={100}
-                    className="w-full rounded-xl border border-[#E6E3DA] bg-[#FAFAF7] px-3 py-3 text-[13px] text-[#1B1B18] outline-none transition-colors placeholder:text-[#B0AB9D] focus:border-[#2F4B3C]"
+                    className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-3 text-[13px] text-white outline-none backdrop-blur-md transition-colors placeholder:text-white/40 focus:border-white/40"
                   />
 
                   <label className="mt-3 flex cursor-pointer items-center gap-2.5">
@@ -722,10 +722,10 @@ export default function EditProfilePage() {
                           event.target.checked
                         )
                       }
-                      className="h-4 w-4 accent-[#2F4B3C]"
+                      className="h-4 w-4 accent-white"
                     />
 
-                    <span className="text-[12px] text-[#5B5748]">
+                    <span className="text-[12px] text-white/70">
                       Show my location publicly
                     </span>
                   </label>
@@ -738,8 +738,8 @@ export default function EditProfilePage() {
                 ================================================= */}
 
             {error && (
-              <div className="rounded-xl border border-[#E7CACA] bg-[#FFF7F7] px-4 py-3">
-                <p className="text-[12px] leading-5 text-[#7A2E2E]">
+              <div className="rounded-xl border border-red-300/30 bg-red-500/10 px-4 py-3 backdrop-blur-md">
+                <p className="text-[12px] leading-5 text-red-200">
                   {error}
                 </p>
               </div>
@@ -749,10 +749,10 @@ export default function EditProfilePage() {
                 ACTIONS
                 ================================================= */}
 
-            <div className="flex flex-col-reverse gap-3 border-t border-[#E6E3DA] pt-6 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-3 border-t border-white/15 pt-6 sm:flex-row sm:justify-end">
               <Link
                 href={`/profile/${form.username}`}
-                className="inline-flex items-center justify-center rounded-full border border-[#E6E3DA] px-5 py-2.5 text-[12.5px] font-medium text-[#5B5748] transition-all duration-150 hover:border-[#1B1B18] hover:text-[#1B1B18] active:scale-95"
+                className="inline-flex items-center justify-center rounded-full border border-white/20 px-5 py-2.5 text-[12.5px] font-medium text-white/70 transition-all duration-150 hover:border-white hover:text-white active:scale-95"
               >
                 Cancel
               </Link>
@@ -760,7 +760,7 @@ export default function EditProfilePage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center rounded-full bg-[#1B1B18] px-6 py-2.5 text-[12.5px] font-medium text-[#FAFAF7] transition-all duration-150 hover:bg-[#2F4B3C] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full bg-white px-6 py-2.5 text-[12.5px] font-medium text-[#1B1B18] transition-all duration-150 hover:bg-white/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving
                   ? "Saving..."
@@ -799,7 +799,7 @@ function Field({
 }: FieldProps) {
   return (
     <div>
-      <label className="mb-2 block text-[12px] font-medium text-[#4F4B40]">
+      <label className="mb-2 block text-[12px] font-medium text-white/80">
         {label}
       </label>
 
@@ -811,7 +811,7 @@ function Field({
         }
         placeholder={placeholder}
         maxLength={maxLength}
-        className="w-full rounded-xl border border-[#E6E3DA] bg-[#FAFAF7] px-3 py-3 text-[13px] text-[#1B1B18] outline-none transition-colors placeholder:text-[#B0AB9D] focus:border-[#2F4B3C]"
+        className="w-full rounded-xl border border-white/15 bg-white/10 px-3 py-3 text-[13px] text-white outline-none backdrop-blur-md transition-colors placeholder:text-white/40 focus:border-white/40"
       />
     </div>
   );
@@ -843,12 +843,12 @@ function TextareaField({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <label className="text-[12px] font-medium text-[#4F4B40]">
+        <label className="text-[12px] font-medium text-white/80">
           {label}
         </label>
 
         {maxLength && (
-          <span className="text-[10px] text-[#A09B8D]">
+          <span className="text-[10px] text-white/50">
             {value.length}/{maxLength}
           </span>
         )}
@@ -862,7 +862,7 @@ function TextareaField({
         placeholder={placeholder}
         maxLength={maxLength}
         rows={rows}
-        className="w-full resize-none rounded-xl border border-[#E6E3DA] bg-[#FAFAF7] px-3 py-3 text-[13px] leading-5 text-[#1B1B18] outline-none transition-colors placeholder:text-[#B0AB9D] focus:border-[#2F4B3C]"
+        className="w-full resize-none rounded-xl border border-white/15 bg-white/10 px-3 py-3 text-[13px] leading-5 text-white outline-none backdrop-blur-md transition-colors placeholder:text-white/40 focus:border-white/40"
       />
     </div>
   );

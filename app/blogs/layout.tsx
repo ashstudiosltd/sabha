@@ -8,5 +8,6 @@ export default function SabhaLayout({
 }: {
   children: React.ReactNode;
 }) {
+
   return children;
 }
