@@ -12,6 +12,7 @@ export interface BlogAuthor {
   username: string;
   avatarInitials: string;
   avatarColor: string;
+  avatarUrl: string | null;
 }
 
 export interface BlogPost {

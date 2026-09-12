@@ -7,16 +7,22 @@ export interface BlogComment {
 
   authorName: string;
   authorUsername: string;
+  authorAvatarUrl: string | null;
 
   content: string;
   createdAt: string;
 }
 
-function formatCommentDate(date: string): string {
-  return new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+function formatCommentDate(
+  date: string
+): string {
+  return new Date(date).toLocaleDateString(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+    }
+  );
 }
 
 export async function getPostComments(
@@ -34,7 +40,8 @@ export async function getPostComments(
       created_at,
       profiles (
         name,
-        username
+        username,
+        avatar_url
       )
     `)
     .eq("post_id", postId)
@@ -52,7 +59,9 @@ export async function getPostComments(
   }
 
   return (data ?? []).map((comment) => {
-    const profile = Array.isArray(comment.profiles)
+    const profile = Array.isArray(
+      comment.profiles
+    )
       ? comment.profiles[0]
       : comment.profiles;
 
@@ -68,6 +77,9 @@ export async function getPostComments(
 
       authorUsername:
         profile?.username ?? "user",
+
+      authorAvatarUrl:
+        profile?.avatar_url ?? null,
 
       content: comment.content,
 
@@ -90,7 +102,8 @@ export async function createPostComment(
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } =
+    await supabase.auth.getUser();
 
   if (userError || !user) {
     return {
@@ -100,12 +113,14 @@ export async function createPostComment(
     };
   }
 
-  const cleanContent = content.trim();
+  const cleanContent =
+    content.trim();
 
   if (cleanContent.length < 1) {
     return {
       comment: null,
-      error: "Comment cannot be empty.",
+      error:
+        "Comment cannot be empty.",
     };
   }
 
@@ -117,25 +132,27 @@ export async function createPostComment(
     };
   }
 
-  const { data, error } = await supabase
-    .from("comments")
-    .insert({
-      post_id: postId,
-      user_id: user.id,
-      content: cleanContent,
-    })
-    .select(`
-      id,
-      post_id,
-      user_id,
-      content,
-      created_at,
-      profiles (
-        name,
-        username
-      )
-    `)
-    .single();
+  const { data, error } =
+    await supabase
+      .from("comments")
+      .insert({
+        post_id: postId,
+        user_id: user.id,
+        content: cleanContent,
+      })
+      .select(`
+        id,
+        post_id,
+        user_id,
+        content,
+        created_at,
+        profiles (
+          name,
+          username,
+          avatar_url
+        )
+      `)
+      .single();
 
   if (error) {
     console.error(
@@ -149,7 +166,9 @@ export async function createPostComment(
     };
   }
 
-  const profile = Array.isArray(data.profiles)
+  const profile = Array.isArray(
+    data.profiles
+  )
     ? data.profiles[0]
     : data.profiles;
 
@@ -166,6 +185,9 @@ export async function createPostComment(
 
       authorUsername:
         profile?.username ?? "user",
+
+      authorAvatarUrl:
+        profile?.avatar_url ?? null,
 
       content: data.content,
 
@@ -188,7 +210,8 @@ export async function deletePostComment(
   const {
     data: { user },
     error: userError,
-  } = await supabase.auth.getUser();
+  } =
+    await supabase.auth.getUser();
 
   if (userError || !user) {
     return {
@@ -197,11 +220,12 @@ export async function deletePostComment(
     };
   }
 
-  const { error } = await supabase
-    .from("comments")
-    .delete()
-    .eq("id", commentId)
-    .eq("user_id", user.id);
+  const { error } =
+    await supabase
+      .from("comments")
+      .delete()
+      .eq("id", commentId)
+      .eq("user_id", user.id);
 
   if (error) {
     console.error(
