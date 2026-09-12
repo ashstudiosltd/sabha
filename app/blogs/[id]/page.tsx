@@ -22,20 +22,23 @@ export async function generateMetadata({
 }: BlogPostPageProps): Promise<Metadata> {
   const { id } = await params;
 
-  const post =
-    await getBlogPostByIdServer(id);
+  const post = await getBlogPostByIdServer(id);
 
   if (!post) {
     return {
-      title:
-        "Post not found | Devvrats Sabha",
+      title: "Post not found | Devvrats Sabha",
     };
   }
 
-  const canonicalUrl =
-    `${SITE_URL}/blogs/${post.id}`;
+  const canonicalUrl = `${SITE_URL}/blogs/${post.id}`;
+
+  // Next.js generates this image from:
+  // app/blogs/[id]/opengraph-image.tsx
+  const ogImageUrl = `${canonicalUrl}/opengraph-image`;
 
   return {
+    metadataBase: new URL(SITE_URL),
+
     title: `${post.title} | Devvrats Sabha`,
     description: post.excerpt,
 
@@ -49,16 +52,33 @@ export async function generateMetadata({
       type: "article",
       siteName: "Devvrats Sabha",
       url: canonicalUrl,
+
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${post.title} | Devvrats Sabha`,
+        },
+      ],
     },
 
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
+
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${post.title} | Devvrats Sabha`,
+        },
+      ],
     },
   };
 }
-
 export default async function BlogPostPage({
   params,
 }: BlogPostPageProps) {
