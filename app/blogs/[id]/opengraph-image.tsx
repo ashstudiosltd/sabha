@@ -1,6 +1,4 @@
-import {
-  ImageResponse,
-} from "next/og";
+import { ImageResponse } from "next/og";
 
 import {
   getBlogPostByIdServer,
@@ -8,16 +6,14 @@ import {
 
 export const runtime = "nodejs";
 
-export const alt =
-  "Devvrats Sabha blog post";
+export const alt = "Devvrats Sabha blog post";
 
 export const size = {
   width: 1200,
   height: 630,
 };
 
-export const contentType =
-  "image/png";
+export const contentType = "image/png";
 
 interface OpenGraphImageProps {
   params: Promise<{
@@ -30,8 +26,18 @@ export default async function Image({
 }: OpenGraphImageProps) {
   const { id } = await params;
 
-  const post =
-    await getBlogPostByIdServer(id);
+  const post = await getBlogPostByIdServer(id);
+
+  /*
+   * Actual Devvrats logo.
+   *
+   * Change this path ONLY if your logo has a different
+   * filename/location inside /public.
+   */
+  const logoUrl = new URL(
+    "/logo.png",
+    "https://sabha.devvrats.in"
+  );
 
   if (!post) {
     return new ImageResponse(
@@ -50,17 +56,33 @@ export default async function Image({
         >
           <div
             style={{
-              fontSize: 28,
-              fontWeight: 600,
-              letterSpacing: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
             }}
           >
-            DEVVRATS
+            <img
+              src={logoUrl.toString()}
+              width="52"
+              height="52"
+              style={{
+                objectFit: "contain",
+              }}
+            />
+
+            <div
+              style={{
+                fontSize: 30,
+                fontWeight: 700,
+              }}
+            >
+              Devvrats
+            </div>
           </div>
 
           <div
             style={{
-              marginTop: 16,
+              marginTop: 18,
               fontSize: 72,
               fontWeight: 700,
             }}
@@ -88,6 +110,8 @@ export default async function Image({
           border: "1px solid #E6E3DA",
         }}
       >
+        {/* HEADER */}
+
         <div
           style={{
             display: "flex",
@@ -95,35 +119,36 @@ export default async function Image({
             alignItems: "center",
           }}
         >
+          {/* DEVVRATS BRAND */}
+
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: 14,
-              fontSize: 26,
-              fontWeight: 700,
-              letterSpacing: 2,
             }}
           >
+            <img
+              src={logoUrl.toString()}
+              width="46"
+              height="46"
+              style={{
+                objectFit: "contain",
+              }}
+            />
+
             <div
               style={{
-                width: 42,
-                height: 42,
-                borderRadius: 12,
-                background: "#1B1B18",
-                color: "#FAFAF7",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 20,
+                fontSize: 28,
                 fontWeight: 700,
+                letterSpacing: -0.5,
               }}
             >
-              D
+              Devvrats
             </div>
-
-            DEVVRATS
           </div>
+
+          {/* SABHA */}
 
           <div
             style={{
@@ -132,9 +157,11 @@ export default async function Image({
               letterSpacing: 1,
             }}
           >
-            SABHA
+            Sabha
           </div>
         </div>
+
+        {/* POST CONTENT */}
 
         <div
           style={{
@@ -180,6 +207,8 @@ export default async function Image({
             {post.excerpt}
           </div>
         </div>
+
+        {/* FOOTER */}
 
         <div
           style={{
