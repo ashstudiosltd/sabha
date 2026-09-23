@@ -47,24 +47,24 @@ export default function ProfileQuickCard({
 
   if (loading) {
     return (
-      <div className="w-full rounded-2xl border border-white/15 bg-white/10 p-4 shadow-xl backdrop-blur-md">
+      <div className="w-full overflow-hidden rounded-[18px] border border-[#d2d2d7] border-l-[8px] border-l-[#4a8fe7] bg-white p-4 font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
         <div className="flex items-center gap-3">
-          <div className="h-12 w-12 animate-pulse rounded-full bg-white/15" />
+          <div className="h-12 w-12 animate-pulse rounded-full bg-[#e8e8ed]" />
 
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-3.5 w-32 animate-pulse rounded bg-white/15" />
-            <div className="h-3 w-24 animate-pulse rounded bg-white/15" />
+            <div className="h-3.5 w-32 animate-pulse rounded bg-[#e8e8ed]" />
+            <div className="h-3 w-24 animate-pulse rounded bg-[#e8e8ed]" />
           </div>
         </div>
 
-        <div className="mt-4 h-3 w-full animate-pulse rounded bg-white/15" />
-        <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-white/15" />
+        <div className="mt-4 h-3 w-full animate-pulse rounded bg-[#e8e8ed]" />
+        <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-[#e8e8ed]" />
 
         <div className="mt-4 grid grid-cols-4 gap-1.5">
-          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
-          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
-          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
-          <div className="h-12 animate-pulse rounded-xl bg-white/15" />
+          <div className="h-12 animate-pulse rounded-[12px] bg-[#e8e8ed]" />
+          <div className="h-12 animate-pulse rounded-[12px] bg-[#e8e8ed]" />
+          <div className="h-12 animate-pulse rounded-[12px] bg-[#e8e8ed]" />
+          <div className="h-12 animate-pulse rounded-[12px] bg-[#e8e8ed]" />
         </div>
       </div>
     );
@@ -72,8 +72,8 @@ export default function ProfileQuickCard({
 
   if (!profile) {
     return (
-      <div className="w-full rounded-2xl border border-white/15 bg-white/10 p-4 shadow-xl backdrop-blur-md">
-        <p className="text-[13px] text-red-300">
+      <div className="w-full overflow-hidden rounded-[18px] border border-[#d2d2d7] border-l-[8px] border-l-[#4a8fe7] bg-white p-4 font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
+        <p className="text-[13px] text-[#d70015]">
           Unable to load this profile.
         </p>
       </div>
@@ -96,7 +96,7 @@ export default function ProfileQuickCard({
 
   return (
     <div
-      className="w-full rounded-2xl border border-white/15 bg-white/10 p-4 shadow-xl backdrop-blur-md"
+      className="w-full overflow-hidden rounded-[18px] border border-[#d2d2d7] border-l-[8px] border-l-[#4a8fe7] bg-white p-4 font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] shadow-[0_12px_40px_rgba(0,0,0,0.18)]"
       onClick={(event) => event.stopPropagation()}
     >
       {/* Header */}
@@ -106,11 +106,11 @@ export default function ProfileQuickCard({
           <img
             src={profile.avatarUrl}
             alt={profile.name}
-            className="h-12 w-12 shrink-0 rounded-full border border-white/20 object-cover"
+            className="h-12 w-12 shrink-0 rounded-full border border-[#d2d2d7] object-cover"
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-[12px] font-medium text-white">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e8e8ed] text-[12px] font-medium text-[#1d1d1f]">
             {initials || "U"}
           </div>
         )}
@@ -119,7 +119,7 @@ export default function ProfileQuickCard({
           <Link
             href={`/profile/${profile.username}`}
             onClick={onClose}
-            className="block truncate text-[14px] font-medium text-white transition-colors hover:text-white/80"
+            className="block truncate text-[15px] font-semibold tracking-[-0.01em] text-[#1d1d1f] transition-colors hover:text-[#0066cc]"
           >
             {profile.name}
           </Link>
@@ -127,7 +127,7 @@ export default function ProfileQuickCard({
           <Link
             href={`/profile/${profile.username}`}
             onClick={onClose}
-            className="block truncate text-[12px] text-white/60 transition-colors hover:text-white/90"
+            className="block truncate text-[12px] text-[#6e6e73] transition-colors hover:text-[#1d1d1f]"
           >
             @{profile.username}
           </Link>
@@ -136,20 +136,20 @@ export default function ProfileQuickCard({
           {(profile.role || profile.status) && (
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               {profile.role && (
-                <span className="truncate text-[11px] text-white/70">
+                <span className="truncate text-[12px] text-[#6e6e73]">
                   {profile.role}
                 </span>
               )}
 
               {profile.role && profile.status && (
-                <span className="text-[10px] text-white/40">
+                <span className="text-[10px] text-[#86868b]">
                   ·
                 </span>
               )}
 
               {profile.status && (
-                <span className="inline-flex max-w-[120px] items-center gap-1 truncate text-[11px] text-white/90">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-white" />
+                <span className="inline-flex max-w-[120px] items-center gap-1 truncate text-[12px] text-[#1d1d1f]">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#2e8b2e]" />
                   <span className="truncate">
                     {profile.status}
                   </span>
@@ -164,7 +164,7 @@ export default function ProfileQuickCard({
             type="button"
             onClick={onClose}
             aria-label="Close profile"
-            className="shrink-0 rounded-full px-2 py-1 text-[11px] text-white/60 transition-colors hover:bg-white/15 hover:text-white"
+            className="shrink-0 rounded-full px-2 py-1 text-[12px] text-[#6e6e73] transition-colors hover:bg-black/5 hover:text-[#1d1d1f]"
           >
             Close
           </button>
@@ -174,7 +174,7 @@ export default function ProfileQuickCard({
       {/* Bio */}
 
       {profile.bio && (
-        <p className="mt-3 line-clamp-3 text-[13px] leading-5 text-white/80">
+        <p className="mt-3 line-clamp-3 text-[13px] leading-5 text-[#6e6e73]">
           {profile.bio}
         </p>
       )}
@@ -186,14 +186,14 @@ export default function ProfileQuickCard({
           {skills.slice(0, 4).map((skill) => (
             <span
               key={skill}
-              className="rounded-full bg-white/15 px-2.5 py-1 text-[10.5px] text-white/80"
+              className="rounded-[4px] bg-[#fbe5d3] px-2.5 py-1 text-[11px] font-medium text-[#b5470f]"
             >
               {skill}
             </span>
           ))}
 
           {skills.length > 4 && (
-            <span className="rounded-full border border-white/20 px-2.5 py-1 text-[10.5px] text-white/60">
+            <span className="rounded-[4px] bg-[#e8e8ed] px-2.5 py-1 text-[11px] font-medium text-[#6e6e73]">
               +{skills.length - 4}
             </span>
           )}
@@ -203,42 +203,42 @@ export default function ProfileQuickCard({
       {/* Stats */}
 
       <div className="mt-4 grid grid-cols-4 gap-1.5">
-        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-white">
+        <div className="rounded-[12px] bg-[#f5f5f7] px-2 py-2 text-center">
+          <p className="text-[14px] font-semibold text-[#1d1d1f]">
             {profile.postsCount}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-white/60">
+          <p className="mt-0.5 text-[11px] text-[#6e6e73]">
             Posts
           </p>
         </div>
 
-        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-white">
+        <div className="rounded-[12px] bg-[#f5f5f7] px-2 py-2 text-center">
+          <p className="text-[14px] font-semibold text-[#1d1d1f]">
             {profile.followersCount}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-white/60">
+          <p className="mt-0.5 text-[11px] text-[#6e6e73]">
             Followers
           </p>
         </div>
 
-        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-white">
+        <div className="rounded-[12px] bg-[#f5f5f7] px-2 py-2 text-center">
+          <p className="text-[14px] font-semibold text-[#1d1d1f]">
             {profile.followingCount}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-white/60">
+          <p className="mt-0.5 text-[11px] text-[#6e6e73]">
             Following
           </p>
         </div>
 
-        <div className="rounded-xl border border-white/15 px-2 py-2 text-center">
-          <p className="text-[13px] font-medium text-white">
+        <div className="rounded-[12px] bg-[#f5f5f7] px-2 py-2 text-center">
+          <p className="text-[14px] font-semibold text-[#1d1d1f]">
             {profile.likesReceived}
           </p>
 
-          <p className="mt-0.5 text-[10px] text-white/60">
+          <p className="mt-0.5 text-[11px] text-[#6e6e73]">
             Likes
           </p>
         </div>
@@ -255,7 +255,7 @@ export default function ProfileQuickCard({
         <Link
           href={`/profile/${profile.username}`}
           onClick={onClose}
-          className="inline-flex flex-1 items-center justify-center rounded-full border border-white/20 px-4 py-2 text-[12px] font-medium text-white transition-all duration-150 hover:border-white hover:bg-white hover:text-[#1B1B18] active:scale-95"
+          className="inline-flex flex-1 items-center justify-center rounded-[8px] border border-[#d2d2d7] bg-white px-4 py-2 text-[13px] font-medium text-[#1d1d1f] transition-all duration-150 hover:border-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white active:scale-95"
         >
           View Profile
         </Link>

@@ -373,12 +373,12 @@ export default function BlogDetailModal({
 
   if (!post) return null;
 
-const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
+  const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
 
   return (
     <>
       <div
-        className="fixed inset-0 z-50"
+        className="fixed inset-0 z-50 font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif]"
         role="dialog"
         aria-modal="true"
         aria-label={post.title}
@@ -386,7 +386,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
         {/* Backdrop */}
 
         <div
-          className={`absolute inset-0 bg-white/10 backdrop-blur-[2px] transition-opacity duration-200 ${
+          className={`absolute inset-0 bg-black/40 backdrop-blur-[3px] transition-opacity duration-200 ${
             visible
               ? "opacity-100"
               : "opacity-0"
@@ -399,7 +399,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
 
         <div className="absolute inset-0 overflow-y-auto px-4 py-6 sm:px-6 sm:py-12">
           <div
-            className={`mx-auto w-full max-w-2xl origin-top rounded-2xl border border-white/10 bg-black/10 shadow-xl transition-all duration-[220ms] ease-out ${
+            className={`mx-auto w-full max-w-2xl origin-top rounded-[18px] border-l-[8px] border-l-[#4a8fe7] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.22)] transition-all duration-[220ms] ease-out ${
               visible
                 ? "translate-y-0 scale-100 opacity-100"
                 : "translate-y-3 scale-95 opacity-0"
@@ -407,7 +407,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
           >
             {/* HEADER */}
 
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4 sm:px-8">
+            <div className="flex items-center justify-between gap-3 border-b border-[#e8e8ed] px-5 py-4 sm:px-8">
               <div className="relative flex min-w-0 items-center gap-2.5">
                 <button
                   type="button"
@@ -430,7 +430,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                     />
                   ) : (
                     <div
-                      className="flex h-full w-full items-center justify-center text-[11px] font-medium tracking-wide text-[#F5F3EC]"
+                      className="flex h-full w-full items-center justify-center text-[11px] font-medium tracking-wide text-white"
                       style={{
                         backgroundColor:
                           post.author.avatarColor,
@@ -441,7 +441,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                   )}
                 </button>
 
-                <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-[13px]">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-[14px]">
                   <button
                     type="button"
                     onClick={(event) => {
@@ -451,7 +451,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                         (current) => !current
                       );
                     }}
-                    className="font-medium text-[#F5F3EC] transition-colors hover:text-[#8FBBA0]"
+                    className="font-medium text-[#1d1d1f] transition-colors hover:text-[#0066cc]"
                   >
                     {post.author.name}
                   </button>
@@ -465,16 +465,16 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                         (current) => !current
                       );
                     }}
-                    className="text-[#F5F3EC]/50 transition-colors hover:text-[#8FBBA0]"
+                    className="text-[#6e6e73] transition-colors hover:text-[#0066cc]"
                   >
                     @{post.author.username}
                   </button>
 
-                  <span className="hidden text-[#F5F3EC]/50 sm:inline">
+                  <span className="hidden text-[#6e6e73] sm:inline">
                     ·
                   </span>
 
-                  <span className="hidden text-[#F5F3EC]/50 sm:inline">
+                  <span className="hidden text-[#6e6e73] sm:inline">
                     {post.date}
                   </span>
                 </div>
@@ -518,7 +518,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                   commentSubmitting
                 }
                 aria-label="Close"
-                className="shrink-0 rounded-full p-1.5 text-[#F5F3EC]/60 transition-all duration-150 active:scale-90 hover:bg-white/10 hover:text-[#F5F3EC] disabled:opacity-40"
+                className="shrink-0 rounded-full p-1.5 text-[#6e6e73] transition-all duration-150 active:scale-90 hover:bg-black/5 hover:text-[#1d1d1f] disabled:opacity-40"
               >
                 <CloseIcon className="h-[18px] w-[18px]" />
               </button>
@@ -527,16 +527,16 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
             {/* POST BODY */}
 
             <div className="px-5 py-6 sm:px-8 sm:py-8">
-              <p className="text-[12px] text-[#F5F3EC]/50">
+              <p className="text-[13px] text-[#6e6e73]">
                 {post.date} · {post.readTime}
               </p>
 
-              <h1 className="mt-2 font-serif text-[26px] leading-tight text-[#F5F3EC] sm:text-[30px]">
+              <h1 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#1d1d1f] sm:text-[40px]">
                 {post.title}
               </h1>
 
               {post.coverImage ? (
-                <div className="mt-5 overflow-hidden rounded-sm border border-white/10">
+                <div className="mt-5 overflow-hidden rounded-[12px]">
                   <img
                     src={post.coverImage}
                     alt=""
@@ -545,7 +545,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                 </div>
               ) : null}
 
-              <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-[#F5F3EC]/80">
+              <div className="mt-5 space-y-4 text-[16px] leading-[1.6] text-[#424245]">
                 {post.content.map(
                   (paragraph, index) => (
                     <p key={index}>
@@ -562,7 +562,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                   {post.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="rounded-full border border-white/10 px-2.5 py-1 text-[12px] text-[#F5F3EC]/60"
+                      className="rounded-[4px] bg-[#d6e4f8] px-2.5 py-1 text-[12px] font-medium text-[#1a4a8f]"
                     >
                       #{tag}
                     </span>
@@ -572,7 +572,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
 
               {/* ACTIONS */}
 
-              <div className="mt-6 flex items-center gap-5 border-t border-white/10 pt-5">
+              <div className="mt-6 flex items-center gap-5 border-t border-[#e8e8ed] pt-5">
                 {/* LIKE */}
 
                 <button
@@ -587,8 +587,8 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                   aria-pressed={liked}
                   className={`flex items-center gap-1.5 text-[13px] transition-all duration-150 active:scale-90 disabled:cursor-not-allowed disabled:opacity-60 ${
                     liked
-                      ? "text-[#E08C8C]"
-                      : "text-[#F5F3EC]/50 hover:text-[#E08C8C]"
+                      ? "text-[#d70015]"
+                      : "text-[#6e6e73] hover:text-[#d70015]"
                   }`}
                 >
                   <HeartIcon
@@ -617,7 +617,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                       block: "start",
                     });
                   }}
-                  className="flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50 transition-all duration-150 active:scale-90 hover:text-[#F5F3EC]"
+                  className="flex items-center gap-1.5 text-[13px] text-[#6e6e73] transition-all duration-150 active:scale-90 hover:text-[#1d1d1f]"
                   aria-label={`${comments.length} comments`}
                 >
                   <CommentIcon className="h-[17px] w-[17px]" />
@@ -634,7 +634,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                   onClick={() =>
                     setShareOpen(true)
                   }
-                  className="ml-auto flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50 transition-all duration-150 active:scale-90 hover:text-[#F5F3EC]"
+                  className="ml-auto flex items-center gap-1.5 text-[13px] text-[#6e6e73] transition-all duration-150 active:scale-90 hover:text-[#1d1d1f]"
                   aria-label="Share this post"
                 >
                   <ShareIcon className="h-[17px] w-[17px]" />
@@ -648,7 +648,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
               {likeError && (
                 <p
                   role="alert"
-                  className="mt-2 text-[11.5px] text-[#E08C8C]"
+                  className="mt-2 text-[12px] text-[#d70015]"
                 >
                   {likeError}
                 </p>
@@ -658,14 +658,14 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
 
               <section
                 id="comments"
-                className="mt-8 border-t border-white/10 pt-6"
+                className="mt-8 border-t border-[#e8e8ed] pt-6"
               >
                 <div className="flex items-center justify-between">
-                  <h2 className="font-serif text-[20px] text-[#F5F3EC]">
+                  <h2 className="text-[22px] font-semibold tracking-[-0.02em] text-[#1d1d1f]">
                     Comments
                   </h2>
 
-                  <span className="text-[12px] text-[#F5F3EC]/50">
+                  <span className="text-[13px] text-[#6e6e73]">
                     {comments.length}
                   </span>
                 </div>
@@ -684,11 +684,11 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                     maxLength={1000}
                     rows={3}
                     disabled={commentSubmitting}
-                    className="w-full resize-none rounded-xl border border-white/10 bg-transparent px-3 py-2.5 text-[13.5px] leading-6 text-[#F5F3EC] placeholder:text-[#F5F3EC]/40 focus:border-[#8FBBA0] focus:outline-none disabled:opacity-60"
+                    className="w-full resize-none rounded-[12px] border border-[#d2d2d7] bg-white px-3.5 py-3 text-[14px] leading-6 text-[#1d1d1f] placeholder:text-[#6e6e73] focus:border-[#0071e3] focus:outline-none disabled:opacity-60"
                   />
 
                   <div className="mt-2 flex items-center justify-between gap-3">
-                    <span className="text-[11px] text-[#F5F3EC]/40">
+                    <span className="text-[12px] text-[#86868b]">
                       {commentText.length}/1000
                     </span>
 
@@ -701,7 +701,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                         commentSubmitting ||
                         !commentText.trim()
                       }
-                      className="rounded-full bg-[#F5F3EC] px-4 py-1.5 text-[12.5px] font-medium text-[#141412] transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="rounded-[8px] bg-[#1d1d1f] px-4 py-2 text-[13px] font-medium text-white transition-all duration-150 hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {commentSubmitting
                         ? "Posting…"
@@ -712,7 +712,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                   {commentError && (
                     <p
                       role="alert"
-                      className="mt-2 text-[11.5px] text-[#E08C8C]"
+                      className="mt-2 text-[12px] text-[#d70015]"
                     >
                       {commentError}
                     </p>
@@ -723,16 +723,16 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
 
                 <div className="mt-6">
                   {commentsLoading ? (
-                    <p className="py-6 text-center text-[12.5px] text-[#F5F3EC]/50">
+                    <p className="py-6 text-center text-[13px] text-[#6e6e73]">
                       Loading comments…
                     </p>
                   ) : comments.length === 0 ? (
-                    <div className="rounded-xl border border-white/10 px-4 py-6 text-center">
-                      <p className="font-serif text-[16px] text-[#F5F3EC]">
+                    <div className="rounded-[12px] bg-[#f5f5f7] px-4 py-6 text-center">
+                      <p className="text-[16px] font-semibold text-[#1d1d1f]">
                         No comments yet
                       </p>
 
-                      <p className="mt-1 text-[12px] text-[#F5F3EC]/50">
+                      <p className="mt-1 text-[13px] text-[#6e6e73]">
                         Be the first to join the conversation.
                       </p>
                     </div>
@@ -757,7 +757,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                                   referrerPolicy="no-referrer"
                                 />
                               ) : (
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2F4B3C] text-[10px] font-medium text-[#F5F3EC]">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8e8ed] text-[10px] font-medium text-[#1d1d1f]">
                                   {comment.authorName
                                     .split(" ")
                                     .filter(Boolean)
@@ -778,7 +778,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                                     onClick={
                                       handleProfileClick
                                     }
-                                    className="text-[13px] font-medium text-[#F5F3EC] transition-colors hover:text-[#8FBBA0]"
+                                    className="text-[14px] font-medium text-[#1d1d1f] transition-colors hover:text-[#0066cc]"
                                   >
                                     {
                                       comment.authorName
@@ -790,7 +790,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                                     onClick={
                                       handleProfileClick
                                     }
-                                    className="text-[12px] text-[#F5F3EC]/50 transition-colors hover:text-[#8FBBA0]"
+                                    className="text-[12px] text-[#6e6e73] transition-colors hover:text-[#0066cc]"
                                   >
                                     @
                                     {
@@ -798,18 +798,18 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                                     }
                                   </Link>
 
-                                  <span className="text-[12px] text-[#F5F3EC]/40">
+                                  <span className="text-[12px] text-[#86868b]">
                                     ·
                                   </span>
 
-                                  <span className="text-[12px] text-[#F5F3EC]/40">
+                                  <span className="text-[12px] text-[#86868b]">
                                     {
                                       comment.createdAt
                                     }
                                   </span>
                                 </div>
 
-                                <p className="mt-1.5 whitespace-pre-wrap text-[13.5px] leading-6 text-[#F5F3EC]/80">
+                                <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-6 text-[#424245]">
                                   {
                                     comment.content
                                   }
@@ -824,7 +824,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                                         comment.id
                                       )
                                     }
-                                    className="mt-1.5 text-[11px] text-[#F5F3EC]/40 opacity-100 transition-colors duration-150 hover:text-[#E08C8C] sm:opacity-0 sm:group-hover:opacity-100"
+                                    className="mt-1.5 text-[12px] text-[#86868b] opacity-100 transition-colors duration-150 hover:text-[#d70015] sm:opacity-0 sm:group-hover:opacity-100"
                                   >
                                     Delete
                                   </button>
@@ -842,7 +842,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
               {/* OWNER DELETE */}
 
               {canDelete && (
-                <div className="mt-8 border-t border-white/10 pt-4">
+                <div className="mt-8 border-t border-[#e8e8ed] pt-4">
                   {!confirmDelete ? (
                     <button
                       type="button"
@@ -854,13 +854,13 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                         likeLoading ||
                         commentSubmitting
                       }
-                      className="text-[12.5px] text-[#F5F3EC]/50 transition-colors duration-150 hover:text-[#E08C8C] disabled:opacity-40"
+                      className="text-[13px] text-[#6e6e73] transition-colors duration-150 hover:text-[#d70015] disabled:opacity-40"
                     >
                       Delete post
                     </button>
                   ) : (
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <p className="text-[12.5px] leading-5 text-[#F5F3EC]/70">
+                   <div className="rounded-[12px] bg-[#f5f5f7] p-3">
+                      <p className="text-[13px] leading-5 text-[#424245]">
                         Delete this post permanently?
                       </p>
 
@@ -871,7 +871,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                             setConfirmDelete(false)
                           }
                           disabled={deleting}
-                          className="rounded-full border border-white/15 px-3 py-1.5 text-[12px] text-[#F5F3EC]/60 transition-transform duration-150 active:scale-95 disabled:opacity-40"
+                          className="rounded-[8px] border border-[#d2d2d7] bg-white px-3.5 py-1.5 text-[13px] text-[#1d1d1f] transition-transform duration-150 active:scale-95 disabled:opacity-40"
                         >
                           Cancel
                         </button>
@@ -880,7 +880,7 @@ const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
                           type="button"
                           onClick={handleDelete}
                           disabled={deleting}
-                          className="rounded-full bg-[#9B3D3D] px-3.5 py-1.5 text-[12px] font-medium text-[#F5F3EC] transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-[8px] bg-[#d70015] px-3.5 py-1.5 text-[13px] font-medium text-white transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {deleting
                             ? "Deleting…"

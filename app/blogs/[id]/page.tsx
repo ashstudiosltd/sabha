@@ -75,17 +75,21 @@ export default async function BlogPostPage({
   return (
     <>
       <Nav />
-      <main className="min-h-screen bg-transparent text-white">
+
+      <main className="min-h-screen bg-transparent text-[#1B1B18]">
         <article className="mx-auto max-w-3xl px-5 pb-20 pt-28 sm:px-8 sm:pt-32">
-          <div className="text-[12px] text-white">
+          <div className="text-[12px] text-[#8A8577]">
             {post.date} · {post.readTime}
           </div>
-          <h1 className="mt-3 font-serif text-[34px] leading-[1.15] tracking-[-0.02em] text-white sm:text-[46px]">
+
+          <h1 className="mt-3 font-serif text-[34px] leading-[1.15] tracking-[-0.02em] text-[#1B1B18] sm:text-[46px]">
             {post.title}
           </h1>
-          <p className="mt-5 max-w-2xl text-[16px] leading-7 text-white">
+
+          <p className="mt-5 max-w-2xl text-[16px] leading-7 text-[#777268]">
             {post.excerpt}
           </p>
+
           <div className="mt-7 flex items-center gap-3">
             {post.author.avatarUrl ? (
               <img
@@ -96,7 +100,7 @@ export default async function BlogPostPage({
               />
             ) : (
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-full text-[11px] font-medium text-white"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-[11px] font-medium text-[#FAFAF7]"
                 style={{
                   backgroundColor:
                     post.author.avatarColor,
@@ -105,15 +109,18 @@ export default async function BlogPostPage({
                 {post.author.avatarInitials}
               </div>
             )}
+
             <div>
-              <p className="text-[13px] font-medium text-white">
+              <p className="text-[13px] font-medium text-[#1B1B18]">
                 {post.author.name}
               </p>
-              <p className="text-[12px] text-white">
+
+              <p className="text-[12px] text-[#8A8577]">
                 @{post.author.username}
               </p>
             </div>
           </div>
+
           {post.coverImage ? (
             <div className="mt-8 overflow-hidden rounded-2xl border border-[#E6E3DA]">
               <img
@@ -123,7 +130,8 @@ export default async function BlogPostPage({
               />
             </div>
           ) : null}
-          <div className="mt-9 space-y-6 text-[16px] leading-8 text-white">
+
+          <div className="mt-9 space-y-6 text-[16px] leading-8 text-[#3A382F]">
             {post.content.map(
               (paragraph, index) => (
                 <p key={index}>
@@ -132,12 +140,13 @@ export default async function BlogPostPage({
               )
             )}
           </div>
+
           {post.tags.length > 0 && (
             <div className="mt-9 flex flex-wrap gap-2 border-t border-[#E6E3DA] pt-6">
               {post.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border border-[#E6E3DA] px-3 py-1.5 text-[11.5px] text-white"
+                  className="rounded-full border border-[#E6E3DA] px-3 py-1.5 text-[11.5px] text-[#6E6A5F]"
                 >
                   #{tag}
                 </span>

@@ -21,6 +21,18 @@ interface OpenGraphImageProps {
   }>;
 }
 
+/*
+ * Keeps long text inside the card so nothing is ever cut off
+ * mid-word or pushed out of the 1200x630 canvas.
+ */
+function truncate(text: string, max: number): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+
+  if (clean.length <= max) return clean;
+
+  return `${clean.slice(0, max).trimEnd()}…`;
+}
+
 export default async function Image({
   params,
 }: OpenGraphImageProps) {
@@ -39,15 +51,6 @@ export default async function Image({
     "https://sabha.devvrats.in"
   );
 
-  /*
-   * Ambient backdrop, matching the blog post page.
-   * Change this path ONLY if the file lives elsewhere in /public.
-   */
-  const bgUrl = new URL(
-    "/login-bg.jpg",
-    "https://sabha.devvrats.in"
-  );
-
   if (!post) {
     return new ImageResponse(
       (
@@ -56,68 +59,77 @@ export default async function Image({
             width: "100%",
             height: "100%",
             display: "flex",
-            position: "relative",
-            backgroundImage: `url(${bgUrl.toString()})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            background: "#f5f5f7",
+            padding: "56px 64px",
           }}
         >
           <div
             style={{
-              position: "absolute",
-              inset: 0,
               display: "flex",
-              background:
-                "linear-gradient(180deg, rgba(11,7,20,0.72) 0%, rgba(11,7,20,0.55) 45%, rgba(11,7,20,0.82) 100%)",
-            }}
-          />
-
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              padding: "80px",
               width: "100%",
               height: "100%",
-              color: "#FAFAF7",
+              background: "#ffffff",
+              borderRadius: 28,
+              overflow: "hidden",
             }}
           >
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                gap: 16,
+                width: 16,
+                background: "#4a8fe7",
               }}
-            >
-              <img
-                src={logoUrl.toString()}
-                width="52"
-                height="52"
-                style={{
-                  objectFit: "contain",
-                }}
-              />
-
-              <div
-                style={{
-                  fontSize: 30,
-                  fontWeight: 700,
-                }}
-              >
-                Devvrats
-              </div>
-            </div>
+            />
 
             <div
               style={{
-                marginTop: 18,
-                fontSize: 72,
-                fontWeight: 700,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                padding: "0 64px",
+                flex: 1,
               }}
             >
-              Sabha
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                }}
+              >
+                <img
+                  src={logoUrl.toString()}
+                  width="52"
+                  height="52"
+                  style={{
+                    objectFit: "contain",
+                  }}
+                />
+
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 30,
+                    fontWeight: 700,
+                    color: "#1d1d1f",
+                  }}
+                >
+                  Devvrats
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  marginTop: 18,
+                  fontSize: 84,
+                  fontWeight: 700,
+                  letterSpacing: -2,
+                  color: "#1d1d1f",
+                }}
+              >
+                Sabha
+              </div>
             </div>
           </div>
         </div>
@@ -126,6 +138,16 @@ export default async function Image({
     );
   }
 
+  const title = truncate(post.title, 100);
+  const excerpt = truncate(post.excerpt, 120);
+
+  const titleSize =
+    title.length <= 40
+      ? 60
+      : title.length <= 70
+        ? 52
+        : 44;
+
   return new ImageResponse(
     (
       <div
@@ -133,182 +155,188 @@ export default async function Image({
           width: "100%",
           height: "100%",
           display: "flex",
-          position: "relative",
-          backgroundImage: `url(${bgUrl.toString()})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          background: "#f5f5f7",
+          padding: "48px 64px",
         }}
       >
-        {/* SCRIM */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            background:
-              "linear-gradient(180deg, rgba(11,7,20,0.72) 0%, rgba(11,7,20,0.42) 45%, rgba(11,7,20,0.8) 100%)",
-          }}
-        />
+        {/* HEADER */}
 
         <div
           style={{
-            position: "relative",
             display: "flex",
-            flexDirection: "column",
             justifyContent: "space-between",
-            padding: "56px 64px",
-            width: "100%",
-            height: "100%",
+            alignItems: "center",
           }}
         >
-          {/* HEADER */}
-
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
               alignItems: "center",
+              gap: 14,
             }}
           >
-            {/* DEVVRATS BRAND */}
+            <img
+              src={logoUrl.toString()}
+              width="44"
+              height="44"
+              style={{
+                objectFit: "contain",
+              }}
+            />
 
             <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                gap: 14,
+                fontSize: 30,
+                fontWeight: 700,
+                letterSpacing: -0.5,
+                color: "#1d1d1f",
               }}
             >
-              <img
-                src={logoUrl.toString()}
-                width="46"
-                height="46"
-                style={{
-                  objectFit: "contain",
-                }}
-              />
-
-              <div
-                style={{
-                  fontSize: 28,
-                  fontWeight: 700,
-                  letterSpacing: -0.5,
-                  color: "#FAFAF7",
-                }}
-              >
-                Devvrats
-              </div>
-            </div>
-
-            {/* SABHA */}
-
-            <div
-              style={{
-                fontSize: 22,
-                color: "#D8D4C8",
-                letterSpacing: 1,
-              }}
-            >
-              Sabha
+              Devvrats
             </div>
           </div>
 
-          {/* POST CONTENT CARD */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: 26,
+              fontWeight: 700,
+              color: "#6e6e73",
+            }}
+          >
+            Sabha
+          </div>
+        </div>
+
+        {/* POST CARD */}
+
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            marginTop: 28,
+            marginBottom: 28,
+            background: "#ffffff",
+            borderRadius: 28,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              width: 16,
+              background: "#4a8fe7",
+            }}
+          />
 
           <div
             style={{
               display: "flex",
               flexDirection: "column",
-              maxWidth: 1040,
-              background: "rgba(250,250,247,0.94)",
-              border: "1px solid rgba(230,227,218,0.9)",
-              borderRadius: 24,
-              padding: "40px 48px",
+              justifyContent: "center",
+              flex: 1,
+              padding: "32px 48px",
             }}
           >
-            <div
-              style={{
-                fontSize: 20,
-                color: "#6E4B2A",
-                fontWeight: 600,
-                marginBottom: 18,
-              }}
-            >
-              {post.category}
-            </div>
+            {post.category ? (
+              <div
+                style={{
+                  display: "flex",
+                  marginBottom: 20,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    background: "#cfe0f7",
+                    color: "#1a4a8a",
+                    fontSize: 22,
+                    fontWeight: 700,
+                    padding: "6px 16px",
+                    borderRadius: 8,
+                  }}
+                >
+                  {post.category}
+                </div>
+              </div>
+            ) : null}
 
             <div
               style={{
-                fontSize:
-                  post.title.length > 65
-                    ? 44
-                    : 54,
-                lineHeight: 1.08,
+                display: "flex",
+                fontSize: titleSize,
+                lineHeight: 1.1,
                 fontWeight: 700,
                 letterSpacing: -1.5,
-                color: "#1B1B18",
+                color: "#1d1d1f",
               }}
             >
-              {post.title}
+              {title}
             </div>
 
             <div
               style={{
-                marginTop: 20,
-                fontSize: 23,
+                display: "flex",
+                marginTop: 18,
+                fontSize: 25,
                 lineHeight: 1.4,
-                color: "#777268",
-                maxWidth: 900,
+                color: "#6e6e73",
               }}
             >
-              {post.excerpt}
+              {excerpt}
             </div>
           </div>
+        </div>
 
-          {/* FOOTER */}
+        {/* FOOTER */}
 
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
+              alignItems: "center",
+              gap: 14,
             }}
           >
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
-                gap: 7,
+                fontSize: 24,
+                fontWeight: 700,
+                color: "#1d1d1f",
               }}
             >
-              <div
-                style={{
-                  fontSize: 21,
-                  fontWeight: 600,
-                  color: "#FAFAF7",
-                }}
-              >
-                {post.author.name}
-              </div>
-
-              <div
-                style={{
-                  fontSize: 18,
-                  color: "#D8D4C8",
-                }}
-              >
-                {post.readTime}
-              </div>
+              {post.author.name}
             </div>
 
             <div
               style={{
-                fontSize: 20,
-                color: "#D8D4C8",
+                display: "flex",
+                fontSize: 22,
+                color: "#6e6e73",
               }}
             >
-              sabha.devvrats.in
+              · {post.readTime}
             </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              fontSize: 22,
+              color: "#6e6e73",
+            }}
+          >
+            sabha.devvrats.in
           </div>
         </div>
       </div>

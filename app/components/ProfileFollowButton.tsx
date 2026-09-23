@@ -62,7 +62,7 @@ export default function ProfileFollowButton({
 
   if (loading) {
     return (
-      <div className="h-9 w-[92px] animate-pulse rounded-full bg-[#E6E3DA]" />
+      <div className="h-9 w-[92px] animate-pulse rounded-full bg-black/10" />
     );
   }
 
@@ -71,10 +71,10 @@ export default function ProfileFollowButton({
       type="button"
       onClick={handleToggleFollow}
       disabled={updating}
-      className={`w-fit rounded-full border px-5 py-2 text-[12.5px] font-medium transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`w-fit rounded-full px-5 py-2 text-[12.5px] font-medium transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
         following
-          ? "border-[#E6E3DA] bg-[#F3F0E9] text-[#5B5748]"
-          : "border-[#1B1B18] bg-[#1B1B18] text-[#FAFAF7] hover:bg-[#2F4B3C]"
+          ? "bg-black/5 text-black hover:bg-black/10"
+          : "bg-black text-white hover:bg-black/85"
       }`}
     >
       {updating

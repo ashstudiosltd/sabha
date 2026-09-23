@@ -28,12 +28,12 @@ export default function BlogCard({
     setShareOpen(true);
   };
 
- const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
+  const shareUrl = `https://sabha.devvrats.in/blogs/${post.id}`;
 
   return (
     <>
       <article
-        className="group cursor-pointer border-b border-white/10 py-7"
+        className="group cursor-pointer overflow-hidden rounded-[18px] border-l-[8px] border-l-[#4a8fe7] bg-white p-5 font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] transition-shadow duration-150 hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] sm:px-6 sm:py-6"
         onClick={() => onOpen(post)}
       >
         {/* Author */}
@@ -57,11 +57,11 @@ export default function BlogCard({
           )}
 
           <div className="min-w-0">
-            <p className="truncate text-[13px] font-medium text-[#F5F3EC]">
+            <p className="truncate text-[14px] font-medium text-[#1d1d1f]">
               {post.author.name}
             </p>
 
-            <p className="text-[11.5px] text-[#F5F3EC]/50">
+            <p className="text-[12px] text-[#6e6e73]">
               @{post.author.username} ·{" "}
               {post.date}
             </p>
@@ -72,11 +72,11 @@ export default function BlogCard({
         <div className="mt-4">
           <div className="flex items-start justify-between gap-5">
             <div className="min-w-0">
-              <h2 className="text-[19px] font-semibold leading-[1.3] tracking-[-0.02em] text-[#F5F3EC] transition-colors group-hover:text-[#8FBBA0]">
+              <h2 className="text-[22px] font-semibold leading-[1.25] tracking-[-0.022em] text-[#1d1d1f] transition-colors group-hover:text-[#0066cc]">
                 {post.title}
               </h2>
 
-              <p className="mt-2 line-clamp-3 text-[13.5px] leading-6 text-[#F5F3EC]/60">
+              <p className="mt-2 line-clamp-3 text-[14px] leading-6 text-[#6e6e73]">
                 {post.excerpt}
               </p>
             </div>
@@ -85,7 +85,7 @@ export default function BlogCard({
               <img
                 src={post.coverImage}
                 alt=""
-                className="hidden h-[82px] w-[110px] shrink-0 rounded-[10px] object-cover sm:block"
+                className="hidden h-[82px] w-[110px] shrink-0 rounded-[12px] object-cover sm:block"
               />
             )}
           </div>
@@ -96,8 +96,7 @@ export default function BlogCard({
               {post.tags.slice(0, 4).map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full  px-2.5 py-1 text-[10.5px] text-[#F5F3EC]/60"
-                >
+                  className="rounded-[4px] bg-[#d6e4f8] px-2.5 py-1 text-[11px] font-medium text-[#1a4a8f]">
                   #{tag}
                 </span>
               ))}
@@ -105,13 +104,13 @@ export default function BlogCard({
           )}
 
           {/* Footer */}
-          <div className="mt-5 flex items-center gap-5">
-            <div className="flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50">
+          <div className="mt-5 flex items-center gap-5 border-t border-[#e8e8ed] pt-4">
+            <div className="flex items-center gap-1.5 text-[13px] text-[#6e6e73]">
               <Heart className="h-[17px] w-[17px]" />
               <span>{post.likes}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50">
+            <div className="flex items-center gap-1.5 text-[13px] text-[#6e6e73]">
               <MessageCircle className="h-[17px] w-[17px]" />
               <span>{post.comments}</span>
             </div>
@@ -119,7 +118,7 @@ export default function BlogCard({
             <button
               type="button"
               onClick={handleShare}
-              className="ml-auto flex items-center gap-1.5 text-[13px] text-[#F5F3EC]/50 transition-all duration-150 hover:text-[#F5F3EC] active:scale-90"
+              className="ml-auto flex items-center gap-1.5 text-[13px] text-[#6e6e73] transition-all duration-150 hover:text-[#1d1d1f] active:scale-90"
               aria-label="Share this post"
             >
               <Share2 className="h-[17px] w-[17px]" />

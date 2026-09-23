@@ -45,7 +45,7 @@ export default function ProfileAction({
 
   if (loading) {
     return (
-      <div className="h-9 w-[92px] animate-pulse rounded-full bg-white/10 backdrop-blur-md" />
+      <div className="h-9 w-[92px] animate-pulse rounded-[8px] bg-[#e8e8ed]" />
     );
   }
 
@@ -53,7 +53,7 @@ export default function ProfileAction({
     return (
       <Link
         href="/settings/profile"
-        className="inline-flex w-fit items-center justify-center rounded-full border border-white/30 bg-white/10 px-5 py-2 text-[12.5px] font-medium text-white backdrop-blur-md transition-all duration-150 hover:bg-white/20 active:scale-95"
+        className="inline-flex w-fit items-center justify-center rounded-[8px] border border-[#d2d2d7] bg-white px-5 py-2 font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] text-[13px] font-medium text-[#1d1d1f] transition-all duration-150 hover:bg-[#ededf0] active:scale-95"
       >
         Edit Profile
       </Link>
