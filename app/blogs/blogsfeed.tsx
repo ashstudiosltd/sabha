@@ -25,7 +25,7 @@ export default function BlogFeed({ posts, query, onQueryChange, onOpenPost }: Bl
           </div>
         ) : (
           <div className="rounded-xl border border-[#E5E1D8] bg-white py-12 text-center">
-            <p className="font-serif text-[18px] text-[#1D1D1F]">No posts match yet</p>
+            <p className="text-[18px] text-[#1D1D1F]">No posts match yet</p>
             <p className="mt-1.5 text-[13.5px] text-[#1D1D1F]/50">
               Try a different category or search term.
             </p>

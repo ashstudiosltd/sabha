@@ -1,18 +1,5 @@
 import type { SVGProps } from "react";
 
-/**
- * Simple outline icons (Feather-style paths, MIT licensed) written as
- * inline SVG, so this file has no icon-library dependency.
- *
- * Each icon keeps the same self-contained hover animation as before:
- * hovering the icon itself animates it, no `group` class needed on the
- * parent.
- *
- * `fill-current` still works for the liked-heart state: the SVG renders
- * with `fill="none"` by default, and a `fill-current` class beats that
- * presentation attribute, so passing `className="... fill-current"`
- * fills the heart in.
- */
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -76,7 +63,7 @@ export function CloseIcon({ className = "", ...props }: IconProps) {
     <svg
       {...baseProps}
       strokeWidth={1.9}
-      className={`transition-transform duration-300 ease-out hover:rotate-90 ${className}`}
+      className={`transition-transform duration-200   ${className}`}
       {...props}
     >
       <line x1="18" y1="6" x2="6" y2="18" />

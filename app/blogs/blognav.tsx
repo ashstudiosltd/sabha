@@ -2,14 +2,31 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CircleUser, Search, X } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 
 interface BlogNavbarProps {
-  query: string;
-  onQueryChange: (value: string) => void;
+  /**
+   * Controlled mode (e.g. the /blogs client page): pass BOTH `query` and
+   * `onQueryChange`.
+   *
+   * URL mode (e.g. server pages like the profile page): pass neither.
+   * The navbar keeps the text in the `?q=` search param, and the server
+   * page reads `searchParams.q` to filter. Pass `initialQuery` so the
+   * input is pre-filled on first render.
+   */
+  query?: string;
+  onQueryChange?: (value: string) => void;
+  initialQuery?: string;
+  placeholder?: string;
+  /**
+   * URL mode only: the route that owns the search (e.g. "/blogs").
+   * If the user types while on a different route, they are sent there.
+   * Omit to filter the current page.
+   */
+  searchPath?: string;
 }
 
 interface CurrentProfile {
@@ -22,16 +39,65 @@ interface CurrentProfile {
 export default function BlogNavbar({
   query,
   onQueryChange,
+  initialQuery = "",
+  placeholder = "Search for a topic, subtopic, or tag",
+  searchPath,
 }: BlogNavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [supabase] = useState(() => createClient());
 
   const [profile, setProfile] = useState<CurrentProfile | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(!!initialQuery);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  /* Controlled vs URL mode */
+  const isControlled =
+    typeof query === "string" && typeof onQueryChange === "function";
+  const [localQuery, setLocalQuery] = useState(initialQuery);
+
+  const value = isControlled ? (query as string) : localQuery;
+  const setValue = (next: string) => {
+    if (isControlled) onQueryChange!(next);
+    else setLocalQuery(next);
+  };
+
+  /* URL mode: push the (debounced) text into ?q= */
+  /* URL mode: restore the input from ?q= after a reload / direct visit */
+  useEffect(() => {
+    if (isControlled) return;
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q) setLocalQuery(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (isControlled) return;
+
+    const target = searchPath ?? pathname;
+    const onTarget = target === pathname;
+
+    const current =
+      new URLSearchParams(window.location.search).get("q") ?? "";
+    if (value.trim() === current) return;
+
+    const timer = setTimeout(() => {
+      const next = new URLSearchParams(onTarget ? window.location.search : "");
+      if (value.trim()) next.set("q", value.trim());
+      else next.delete("q");
+
+      const qs = next.toString();
+      const href = qs ? `${target}?${qs}` : target;
+
+      if (onTarget) router.replace(href, { scroll: false });
+      else router.push(href);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [value, isControlled, pathname, searchPath, router]);
 
   /* Load current profile */
   useEffect(() => {
@@ -151,7 +217,7 @@ export default function BlogNavbar({
               className="h-[22px] w-auto object-contain"
             />
             <span className="text-[21px] font-medium leading-none tracking-[-0.02em]">
-              Sabha
+              Sabha. 
             </span>
           </Link>
         </div>
@@ -167,7 +233,7 @@ export default function BlogNavbar({
             href="/blogs"
             className="shrink-0 text-[24px] font-semibold leading-none tracking-[-0.02em] text-[#1d1d1f]"
           >
-            Blogs
+            Blogs. 
           </Link>
 
           {/* Search (sm and up) */}
@@ -175,9 +241,9 @@ export default function BlogNavbar({
             <Search className="pointer-events-none absolute left-3 h-[16px] w-[16px] text-[#6e6e73]" />
             <input
               type="text"
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              placeholder="Search for a topic, subtopic, or tag"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder={placeholder}
               aria-label="Search blogs"
               className={inputClass}
             />
@@ -202,7 +268,7 @@ export default function BlogNavbar({
 
             {/* Desktop links */}
             <Link href="/blogs" className={`hidden md:block ${linkClass}`}>
-              Blogs
+              Blogs. 
             </Link>
             <Link
               href="/blogs?sort=recent"
@@ -329,9 +395,9 @@ export default function BlogNavbar({
               <input
                 ref={searchRef}
                 type="text"
-                value={query}
-                onChange={(e) => onQueryChange(e.target.value)}
-                placeholder="Search for a topic, subtopic, or tag"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder={placeholder}
                 aria-label="Search blogs"
                 className={inputClass}
               />

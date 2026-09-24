@@ -1,32 +1,26 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { BlogPost, Category } from "@/data/blog";
-import {
-  deleteBlogPost,
-  getBlogPosts,
-} from "@/lib/supabase/blog";
+import { deleteBlogPost, getBlogPosts } from "@/lib/supabase/blog";
 import { createClient } from "@/lib/supabase/client";
 import BlogFeed from "./blogsfeed";
 import BlogSidebar from "./blogsidebar";
 import BlogDetailModal from "./blogdetailmodal";
 
-export default function BlogsPage() {
-  const supabase = createClient();
+function BlogsPageContent() {
+  const [supabase] = useState(() => createClient());
+
+  /* The navbar (in layout.tsx) writes the search text to ?q= */
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] =
-    useState<Category>("All");
-  const [query, setQuery] = useState("");
-  const [selectedPost, setSelectedPost] =
-    useState<BlogPost | null>(null);
-  const [currentUserId, setCurrentUserId] =
-    useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<Category>("All");
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const loadPosts = useCallback(async () => {
     setLoading(true);
@@ -69,14 +63,10 @@ export default function BlogsPage() {
     const normalizedQuery = query.trim().toLowerCase();
     return posts.filter((post) => {
       const matchesCategory =
-        activeCategory === "All" ||
-        post.category === activeCategory;
-      if (!matchesCategory) {
-        return false;
-      }
-      if (!normalizedQuery) {
-        return true;
-      }
+        activeCategory === "All" || post.category === activeCategory;
+      if (!matchesCategory) return false;
+      if (!normalizedQuery) return true;
+
       const haystack = [
         post.title,
         post.excerpt,
@@ -90,7 +80,7 @@ export default function BlogsPage() {
     });
   }, [posts, activeCategory, query]);
 
-    return (
+  return (
     <div className="text-[#1d1d1f]">
       <div className="mx-auto max-w-[1180px] px-5 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-8 lg:px-10 lg:pt-10">
         <h1 className="mb-6 text-[40px] font-semibold leading-[1.05] tracking-[-0.03em] text-[#1d1d1f] sm:mb-8 sm:text-[56px]">
@@ -111,7 +101,7 @@ export default function BlogsPage() {
               <BlogFeed
                 posts={filteredPosts}
                 query={query}
-                onQueryChange={setQuery}
+                onQueryChange={() => {}} /* search input lives in the navbar */
                 onOpenPost={setSelectedPost}
               />
             )}
@@ -131,5 +121,14 @@ export default function BlogsPage() {
         canDelete={selectedPost?.authorId === currentUserId}
       />
     </div>
+  );
+}
+
+/* useSearchParams() needs a Suspense boundary in the App Router */
+export default function BlogsPage() {
+  return (
+    <Suspense fallback={null}>
+      <BlogsPageContent />
+    </Suspense>
   );
 }
