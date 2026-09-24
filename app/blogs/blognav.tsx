@@ -119,9 +119,11 @@ export default function BlogNavbar({
     router.refresh();
   };
 
+  const font =
+    "font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif]";
+  const container = "mx-auto w-full max-w-[980px] px-5";
   const linkClass =
     "text-[14px] text-[#1d1d1f] transition-colors hover:text-[#0066cc]";
-  const container = "mx-auto w-full max-w-[1200px] px-4 sm:px-6";
   const itemClass =
     "block w-full px-4 py-2.5 text-left text-[14px] text-[#1d1d1f] hover:bg-[#f5f5f7]";
   const inputClass =
@@ -135,7 +137,7 @@ export default function BlogNavbar({
   return (
     <>
       {/* ───── Top brand bar (scrolls away) ───── */}
-      <div className={`h-[44px] bg-[#f2f2f2] `}>
+      <div className={`h-[44px] bg-[#f2f2f2] ${font}`}>
         <div className={`${container} flex h-full items-center`}>
           <Link
             href="/blogs"
@@ -144,12 +146,12 @@ export default function BlogNavbar({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logot.png"
+              src="/logo.png"
               alt=""
               className="h-[22px] w-auto object-contain"
             />
             <span className="text-[21px] font-medium leading-none tracking-[-0.02em]">
-              Sabha.
+              Sabha
             </span>
           </Link>
         </div>
@@ -157,7 +159,7 @@ export default function BlogNavbar({
 
       {/* ───── Main bar (stays fixed at the top on scroll) ───── */}
       <div
-        className={`sticky top-0 z-40 border-b border-[#d2d2d7] bg-white `}
+        className={`sticky top-0 z-40 border-b border-[#d2d2d7] bg-white ${font}`}
       >
         <div className={`${container} flex h-[58px] items-center gap-4 sm:gap-6`}>
           {/* Title */}
@@ -165,7 +167,7 @@ export default function BlogNavbar({
             href="/blogs"
             className="shrink-0 text-[24px] font-semibold leading-none tracking-[-0.02em] text-[#1d1d1f]"
           >
-            Blogs. 
+            Blogs
           </Link>
 
           {/* Search (sm and up) */}
@@ -200,7 +202,7 @@ export default function BlogNavbar({
 
             {/* Desktop links */}
             <Link href="/blogs" className={`hidden md:block ${linkClass}`}>
-              Blogs. 
+              Blogs
             </Link>
             <Link
               href="/blogs?sort=recent"

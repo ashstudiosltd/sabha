@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import ProfileAction from "@/app/components/ProfileAction";
-import Nav from "@/app/blogs/blognav";
+
 
 import { getPublicProfile } from "@/lib/supabase/profile";
 import { getBlogPosts } from "@/lib/supabase/blog";
@@ -120,7 +120,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   return (
     <>
-      <Nav/>
+
       <main className="min-h-screen bg-[#f5f5f7] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] text-[#1d1d1f]">
         <div className="mx-auto w-full max-w-[1180px] px-5 pb-24 pt-8 sm:px-8 sm:pt-12 lg:px-10">
           {/* ───────── Profile card ───────── */}
