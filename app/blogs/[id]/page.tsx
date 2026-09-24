@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import {
   getBlogPostByIdServer,
 } from "@/lib/supabase/blog-server";
-import Nav from "../../sabha/nav";
 import Footer from "@/app/blogs/footer";
 interface BlogPostPageProps {
   params: Promise<{
@@ -74,8 +73,6 @@ export default async function BlogPostPage({
   }
   return (
     <>
-      <Nav />
-
       <main className="min-h-screen bg-transparent text-[#1B1B18]">
         <article className="mx-auto max-w-3xl px-5 pb-20 pt-28 sm:px-8 sm:pt-32">
           <div className="text-[12px] text-[#8A8577]">
