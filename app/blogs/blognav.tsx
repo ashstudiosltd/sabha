@@ -146,7 +146,7 @@ export default function BlogNavbar({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo.png"
+              src="/logot.png"
               alt=""
               className="h-[22px] w-auto object-contain"
             />
