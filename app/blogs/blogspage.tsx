@@ -14,8 +14,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import BlogFeed from "./blogsfeed";
 import BlogSidebar from "./blogsidebar";
-import BlogNavbar from "./blognav";
-
 import BlogDetailModal from "./blogdetailmodal";
 
 export default function BlogsPage() {
@@ -92,24 +90,16 @@ export default function BlogsPage() {
     });
   }, [posts, activeCategory, query]);
 
-  return (
-    <div className="min-h-screen bg-[#f5f5f7] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] text-[#1d1d1f]">
-      <div
-        className="h-16 bg-[#f5f5f7] lg:h-20"
-        aria-hidden="true"
-      />
-
-      <BlogNavbar query={query} onQueryChange={setQuery} />
-
-      <div className="mx-auto max-w-[1180px] px-5 pb-28 pt-10 sm:px-8 sm:pt-14 lg:px-10 lg:pt-16">
-        <h1 className="mb-10 text-[40px] font-semibold leading-[1.05] tracking-[-0.03em] text-[#1d1d1f] sm:text-[56px]">
-          Blogs
+    return (
+    <div className="text-[#1d1d1f]">
+      <div className="mx-auto max-w-[1180px] px-5 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-8 lg:px-10 lg:pt-10">
+        <h1 className="mb-6 text-[40px] font-semibold leading-[1.05] tracking-[-0.03em] text-[#1d1d1f] sm:mb-8 sm:text-[56px]">
+          Recents.
         </h1>
-
-        <div className="grid grid-cols-1 gap-14 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10">
           <main>
             {loading ? (
-              <div className="space-y-4 py-4">
+              <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
                   <div
                     key={i}
@@ -134,7 +124,6 @@ export default function BlogsPage() {
           />
         </div>
       </div>
-
       <BlogDetailModal
         post={selectedPost}
         onClose={() => setSelectedPost(null)}

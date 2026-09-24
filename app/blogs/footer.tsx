@@ -186,7 +186,7 @@ export default function Footer() {
               Community
             </p>
 
-            <ul className="flex flex-col gap-2.5">
+            <ul className="flex flex-col text-black gap-2.5">
               {communityLinks.map((l) => (
                 <li key={l.label}>
                   <Link
@@ -206,7 +206,7 @@ export default function Footer() {
               Follow
             </p>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap text-black gap-3">
               {socialLinks.map((s) => (
                 <a
                   key={s.label}

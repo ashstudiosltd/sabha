@@ -9,7 +9,7 @@ export default function TrendingBlogs({ items }: TrendingBlogsProps) {
     <ol className="space-y-4">
       {items.map((item, index) => (
         <li key={item.id} className="flex gap-3">
-          <span className="mt-0.5 w-4 shrink-0 font-serif text-[13px] text-[#1D1D1F]/40">
+          <span className="mt-0.5 w-4 shrink-0  text-[13px] text-[#1D1D1F]/40">
             {String(index + 1).padStart(2, "0")}
           </span>
           <div className="min-w-0">

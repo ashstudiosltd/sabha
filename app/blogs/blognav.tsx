@@ -120,181 +120,58 @@ export default function BlogNavbar({
   };
 
   const linkClass =
-    "text-[15px] text-[#1d1d1f] transition-colors hover:text-[#0066cc]";
+    "text-[14px] text-[#1d1d1f] transition-colors hover:text-[#0066cc]";
+  const container = "mx-auto w-full max-w-[1200px] px-4 sm:px-6";
   const itemClass =
     "block w-full px-4 py-2.5 text-left text-[14px] text-[#1d1d1f] hover:bg-[#f5f5f7]";
   const inputClass =
-    "h-full w-full rounded-[12px] border border-[#d2d2d7] bg-white pl-11 pr-4 text-[16px] text-[#1d1d1f] outline-none transition-colors placeholder:text-[#6e6e73] focus:border-[#0071e3]";
+    "h-full w-full rounded-[10px] border border-[#d2d2d7] bg-white pl-10 pr-4 text-[16px] text-[#1d1d1f] outline-none transition-colors placeholder:text-[#86868b] focus:border-[#0071e3] sm:text-[15px]";
 
+  /*
+    Returned as a fragment on purpose: the gray brand bar scrolls away with
+    the page, while the white bar is `sticky` relative to the page container
+    (not to a wrapper that is only as tall as the navbar).
+  */
   return (
-    <div className="sticky top-0 z-40 border-b border-[#d2d2d7] bg-white font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif]">
-      <div className="mx-auto flex h-[70px] max-w-[1180px] items-center gap-4 px-5 sm:gap-6 sm:px-8 lg:px-10">
-        {/* Title */}
-        <Link
-          href="/blogs"
-          className="shrink-0 text-[24px] font-semibold tracking-[-0.02em] text-[#1d1d1f] sm:text-[28px]"
-        >
-          Blogs
-        </Link>
-
-        {/* Search (sm and up) */}
-        <div className="relative ml-2 hidden h-[46px] w-full max-w-[560px] items-center sm:flex">
-          <Search className="pointer-events-none absolute left-4 h-[18px] w-[18px] text-[#6e6e73]" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search for a topic, subtopic, or tag"
-            aria-label="Search blogs"
-            className={inputClass}
-          />
-        </div>
-
-        {/* Links */}
-        <div className="ml-auto flex items-center gap-5">
-          {/* Search toggle (below sm) */}
-          <button
-            type="button"
-            onClick={() => setSearchOpen((v) => !v)}
-            aria-label={searchOpen ? "Close search" : "Open search"}
-            aria-expanded={searchOpen}
-            className="text-[#1d1d1f] sm:hidden"
-          >
-            {searchOpen ? (
-              <X className="h-[22px] w-[22px]" />
-            ) : (
-              <Search className="h-[22px] w-[22px]" />
-            )}
-          </button>
-
-          {/* Desktop links */}
-          <Link href="/blogs" className={`hidden md:block ${linkClass}`}>
-            Blogs
-          </Link>
+    <>
+      {/* ───── Top brand bar (scrolls away) ───── */}
+      <div className={`h-[44px] bg-[#f2f2f2] `}>
+        <div className={`${container} flex h-full items-center`}>
           <Link
-            href="/blogs?sort=recent"
-            className={`hidden md:block ${linkClass}`}
+            href="/blogs"
+            aria-label="Sabha"
+            className="flex items-center gap-1.5 text-[#1d1d1f]"
           >
-            Recent posts
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logot.png"
+              alt=""
+              className="h-[22px] w-auto object-contain"
+            />
+            <span className="text-[21px] font-medium leading-none tracking-[-0.02em]">
+              Sabha.
+            </span>
           </Link>
-
-          {/* Post -> its own page */}
-          <Link
-            href="/blogs/new"
-            className="rounded-[6px] bg-[#1d1d1f] px-4 py-2 text-[15px] font-medium text-white transition-all hover:bg-black active:scale-95"
-          >
-            Post
-          </Link>
-
-          {/* Profile */}
-          {profile ? (
-            <div ref={menuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                aria-label="Account menu"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                className="flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full text-[#2f80ed] transition-opacity hover:opacity-80"
-              >
-                {profile.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={profile.avatarUrl}
-                    alt=""
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <CircleUser
-                    className="h-[34px] w-[34px]"
-                    strokeWidth={1.5}
-                  />
-                )}
-              </button>
-
-              {menuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full mt-2 w-[230px] overflow-hidden rounded-[12px] border border-[#d2d2d7] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
-                >
-                  <div className="border-b border-[#e8e8ed] px-4 py-3">
-                    <p className="truncate text-[15px] font-semibold text-[#1d1d1f]">
-                      {profile.username}
-                    </p>
-                  </div>
-
-                  {/* Links shown here on small screens */}
-                  <div className="border-b border-[#e8e8ed] py-1 md:hidden">
-                    <Link
-                      role="menuitem"
-                      href="/blogs"
-                      onClick={() => setMenuOpen(false)}
-                      className={itemClass}
-                    >
-                      Blogs
-                    </Link>
-                    <Link
-                      role="menuitem"
-                      href="/blogs?sort=recent"
-                      onClick={() => setMenuOpen(false)}
-                      className={itemClass}
-                    >
-                      Recent posts
-                    </Link>
-                  </div>
-
-                  <div className="py-1">
-                    <Link
-                      role="menuitem"
-                      href={`/profile/${profile.username}`}
-                      onClick={() => setMenuOpen(false)}
-                      className={itemClass}
-                    >
-                      View Profile
-                    </Link>
-                    <Link
-                      role="menuitem"
-                      href="/settings/profile"
-                      onClick={() => setMenuOpen(false)}
-                      className={itemClass}
-                    >
-                      Edit Profile
-                    </Link>
-                  </div>
-
-                  <div className="border-t border-[#e8e8ed] py-1">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleSignOut}
-                      className={`${itemClass} text-[#d70015]`}
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              aria-label="Sign in"
-              className="flex h-[34px] w-[34px] items-center justify-center text-[#2f80ed] transition-opacity hover:opacity-80"
-            >
-              <CircleUser className="h-[34px] w-[34px]" strokeWidth={1.5} />
-            </Link>
-          )}
         </div>
       </div>
 
-      {/* Search row (below sm, only when toggled) */}
-      {searchOpen && (
-        <div className="border-t border-[#e8e8ed] px-5 py-3 sm:hidden">
-          <div className="relative flex h-[44px] items-center">
-            <Search className="pointer-events-none absolute left-4 h-[18px] w-[18px] text-[#6e6e73]" />
+      {/* ───── Main bar (stays fixed at the top on scroll) ───── */}
+      <div
+        className={`sticky top-0 z-40 border-b border-[#d2d2d7] bg-white `}
+      >
+        <div className={`${container} flex h-[58px] items-center gap-4 sm:gap-6`}>
+          {/* Title */}
+          <Link
+            href="/blogs"
+            className="shrink-0 text-[24px] font-semibold leading-none tracking-[-0.02em] text-[#1d1d1f]"
+          >
+            Blogs. 
+          </Link>
+
+          {/* Search (sm and up) */}
+          <div className="relative ml-2 hidden h-[36px] w-full max-w-[460px] items-center sm:ml-8 sm:flex lg:ml-14">
+            <Search className="pointer-events-none absolute left-3 h-[16px] w-[16px] text-[#6e6e73]" />
             <input
-              ref={searchRef}
               type="text"
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
@@ -303,8 +180,163 @@ export default function BlogNavbar({
               className={inputClass}
             />
           </div>
+
+          {/* Links */}
+          <div className="ml-auto flex items-center gap-5 sm:gap-6">
+            {/* Search toggle (below sm) */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen((v) => !v)}
+              aria-label={searchOpen ? "Close search" : "Open search"}
+              aria-expanded={searchOpen}
+              className="text-[#1d1d1f] sm:hidden"
+            >
+              {searchOpen ? (
+                <X className="h-[20px] w-[20px]" />
+              ) : (
+                <Search className="h-[20px] w-[20px]" />
+              )}
+            </button>
+
+            {/* Desktop links */}
+            <Link href="/blogs" className={`hidden md:block ${linkClass}`}>
+              Blogs. 
+            </Link>
+            <Link
+              href="/blogs?sort=recent"
+              className={`hidden md:block ${linkClass}`}
+            >
+              Recent posts
+            </Link>
+
+            {/* Post -> its own page */}
+            <Link
+              href="/blogs/new"
+              className="flex h-[28px] items-center rounded-[6px] bg-[#1d1d1f] px-3.5 text-[14px] font-medium text-white transition-all hover:bg-black active:scale-95"
+            >
+              Post
+            </Link>
+
+            {/* Profile */}
+            {profile ? (
+              <div ref={menuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  aria-label="Account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  className="flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full text-[#2f80ed] transition-opacity hover:opacity-80"
+                >
+                  {profile.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profile.avatarUrl}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <CircleUser
+                      className="h-[30px] w-[30px]"
+                      strokeWidth={1.5}
+                    />
+                  )}
+                </button>
+
+                {menuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-2 w-[230px] overflow-hidden rounded-[12px] border border-[#d2d2d7] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                  >
+                    <div className="border-b border-[#e8e8ed] px-4 py-3">
+                      <p className="truncate text-[15px] font-semibold text-[#1d1d1f]">
+                        {profile.username}
+                      </p>
+                    </div>
+
+                    {/* Links shown here on small screens */}
+                    <div className="border-b border-[#e8e8ed] py-1 md:hidden">
+                      <Link
+                        role="menuitem"
+                        href="/blogs"
+                        onClick={() => setMenuOpen(false)}
+                        className={itemClass}
+                      >
+                        Blogs
+                      </Link>
+                      <Link
+                        role="menuitem"
+                        href="/blogs?sort=recent"
+                        onClick={() => setMenuOpen(false)}
+                        className={itemClass}
+                      >
+                        Recent posts
+                      </Link>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                        role="menuitem"
+                        href={`/profile/${profile.username}`}
+                        onClick={() => setMenuOpen(false)}
+                        className={itemClass}
+                      >
+                        View Profile
+                      </Link>
+                      <Link
+                        role="menuitem"
+                        href="/settings/profile"
+                        onClick={() => setMenuOpen(false)}
+                        className={itemClass}
+                      >
+                        Edit Profile
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-[#e8e8ed] py-1">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleSignOut}
+                        className={`${itemClass} text-[#d70015]`}
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                aria-label="Sign in"
+                className="flex h-[30px] w-[30px] items-center justify-center text-[#2f80ed] transition-opacity hover:opacity-80"
+              >
+                <CircleUser className="h-[30px] w-[30px]" strokeWidth={1.5} />
+              </Link>
+            )}
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* Search row (below sm, only when toggled) */}
+        {searchOpen && (
+          <div className="border-t border-[#e8e8ed] px-5 py-3 sm:hidden">
+            <div className="relative flex h-[40px] items-center">
+              <Search className="pointer-events-none absolute left-3 h-[16px] w-[16px] text-[#6e6e73]" />
+              <input
+                ref={searchRef}
+                type="text"
+                value={query}
+                onChange={(e) => onQueryChange(e.target.value)}
+                placeholder="Search for a topic, subtopic, or tag"
+                aria-label="Search blogs"
+                className={inputClass}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

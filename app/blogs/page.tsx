@@ -1,12 +1,14 @@
 "use client";
-import React from 'react'
+import React, { useState } from 'react'
 import BlogsPage from './blogspage';
 import Footer from './footer';
-import Nav from '../sabha/nav';
+import BlogNavbar from './blognav';
 const blog= () => {
+  const [query, setQuery] = useState('');
+
   return (
     <>
-  <Nav/>
+  <BlogNavbar query={query} onQueryChange={setQuery}/>
   <BlogsPage/>
   <Footer/>
     </>

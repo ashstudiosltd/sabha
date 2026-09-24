@@ -4,7 +4,7 @@ import {
   getBlogPostByIdServer,
 } from "@/lib/supabase/blog-server";
 import Nav from "../../sabha/nav";
-import Footer from "../../sabha/footer";
+import Footer from "@/app/blogs/footer";
 interface BlogPostPageProps {
   params: Promise<{
     id: string;
@@ -82,7 +82,7 @@ export default async function BlogPostPage({
             {post.date} · {post.readTime}
           </div>
 
-          <h1 className="mt-3 font-serif text-[34px] leading-[1.15] tracking-[-0.02em] text-[#1B1B18] sm:text-[46px]">
+          <h1 className="mt-3  text-[34px] leading-[1.15] tracking-[-0.02em] text-[#1B1B18] sm:text-[46px]">
             {post.title}
           </h1>
 

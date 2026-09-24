@@ -20,7 +20,7 @@ function SidebarSection({
 }) {
   return (
     <section>
-      <h2 className="mb-3 text-[11.5px] font-medium tracking-[0.08em] text-black">
+      <h2 className="mb-2.5 text-[11.5px] font-medium tracking-[0.08em] text-black">
         {title}
       </h2>
       {children}
@@ -44,7 +44,7 @@ export default function BlogSidebar({
     }));
 
   return (
-    <aside className="hidden bg-transparent lg:sticky lg:top-8 lg:block lg:space-y-9">
+    <aside className="hidden bg-transparent lg:sticky lg:top-8 lg:block lg:space-y-5">
       <SidebarSection title="Explore">
         <CategoryList
           categoriesList={categories}

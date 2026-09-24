@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
+import { Roboto as RobotoFont } from "next/font/google";
+
+const Roboto = RobotoFont({
+  weight: "400",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Blogs",
 };
+
 export default function Blogs({ children }: LayoutProps<"/">) {
- return (
-    <html lang="en" className="dark">
-      <body className="relative text-white">
-        {/* Gradient background only */}
-        <div className="absolute inset-0 -z-10 bg-White" />
-        
-        {/* Page content */}
-        <main className="relative z-10 min-h-screen">
-          {children}
-        </main>
-      </body>
-    </html>
+  return (
+    <div className={`bg-[#F5F6F7] ${Roboto.className}`}>
+      {children}
+    </div>
   );
 }
