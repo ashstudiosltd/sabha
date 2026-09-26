@@ -145,11 +145,11 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <p className="text-sm font-medium tracking-[0.18em] text-black mb-3">
-              SABHA.
+              Sabha.
             </p>
 
             <p className="text-[13px] text-black leading-relaxed max-w-[200px]">
-              Your ultimate learning and community platform for developers.
+            Ultimate learning and community platform for developers.
             </p>
           </div>
 
