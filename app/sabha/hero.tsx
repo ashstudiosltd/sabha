@@ -175,7 +175,7 @@ export default function SabhaHero() {
           mouseX.set(-1000);
           mouseY.set(-1000);
         }}
-        className="relative min-h-screen w-full bg-transparent text-white flex flex-col justify-center px-4 sm:px-6 md:px-12 lg:px-24 overflow-hidden bg-gradient-to-b from-black via-gray-900 to-purple-950 opacity-90"
+        className="relative min-h-screen w-full bg-transparent text-white flex flex-col justify-center px-4 sm:px-6 md:px-12 lg:px-24 overflow-hidden"
       >
         <div className="max-w-7xl mx-auto w-full relative z-10">
           <header className="mb-10 md:mb-40">

@@ -15,7 +15,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 w-full z-20 transition-all duration-500 text-black">
+    <header className="fixed top-0 left-0 w-full z-20 transition-all duration-500 text-white">
       <div
         className={`mx-auto flex items-center justify-between px-6 py-4 lg:px-16 
         max-w-6xl mt-4 rounded-2xl shadow-lg transition-all duration-500
@@ -26,7 +26,7 @@ export default function Navbar() {
         }`}
       >
         <div className="flex items-center gap-2">
-          <Logo className="h-7 w-7 text-black" />
+          <Logo className="h-7 w-7 text-white" />
           <div className="flex flex-col">
             <span className="font-semibold text-lg tracking-wide">SABHA.</span>
             <span className="text-[10px] leading-none sm:text-xs">Powered by ANU. </span>

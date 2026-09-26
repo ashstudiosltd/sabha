@@ -10,16 +10,16 @@ const Roboto = RobotoFont({
 export const metadata: Metadata = {
   title: "Blogs",
 };
-export default function Blogs({ children }: LayoutProps<"/">) {
- return (
-    <html lang="en" className="dark">
-      <body className="relative text-white">
-        {/* Page content */}
-        <main className={`relative z-10 min-h-screen bg-[#F5F6F7] ${Roboto.className}`}>
-           <BlogNavbar searchPath="/blogs" />
-          {children}
-        </main>
-      </body>
-    </html>
+
+export default function BlogsLayout({
+  children,
+}: LayoutProps<"/">) {
+  return (
+    <main
+      className={`relative z-10 min-h-screen bg-[#F5F6F7] ${Roboto.className}`}
+    >
+      <BlogNavbar searchPath="/blogs" />
+      {children}
+    </main>
   );
 }

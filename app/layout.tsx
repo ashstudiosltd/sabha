@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
  return (
     <html lang="en" className="dark">
-      <body className="relative text-white">
+      <body className="relative text-white bg-gradient-to-b from-black via-gray-900 to-purple-950 opacity-90">
         {/* Gradient background only */}
         <div className="absolute inset-0 -z-10" />
         
