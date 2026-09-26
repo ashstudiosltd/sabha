@@ -98,8 +98,8 @@ const siteLinks = [
 ];
 
 const communityLinks = [
-  { label: "Login", href: "/registration" },
-  { label: "Sabha", href: "/registration" },
+  { label: "Login", href: "/app/auth/callback" },
+  { label: "Sabha", href: "/blogs" },
 ];
 
 const socialLinks = [
@@ -145,11 +145,11 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <p className="text-sm font-medium tracking-[0.18em] text-white mb-3">
-              SABHA.
+              Sabha.
             </p>
 
             <p className="text-[13px] text-white leading-relaxed max-w-[200px]">
-              Your ultimate learning and community platform for developers.
+              Ultimate learning and community platform for developers.
             </p>
           </div>
 
@@ -236,7 +236,7 @@ export default function Footer() {
           }}
         >
           <p className="text-[11px] text-white">
-            © 2024 Ashstudios. All rights reserved.
+            2026 Devvrats. All rights reserved.
           </p>
         </div>
       </div>

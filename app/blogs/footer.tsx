@@ -98,8 +98,8 @@ const siteLinks = [
 ];
 
 const communityLinks = [
-  { label: "Login", href: "/registration" },
-  { label: "Sabha", href: "/registration" },
+  { label: "Login", href: "/app/auth/callback" },
+  { label: "Sabha", href: "/blogs" },
 ];
 
 const socialLinks = [
