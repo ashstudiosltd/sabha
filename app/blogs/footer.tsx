@@ -98,7 +98,7 @@ const siteLinks = [
 ];
 
 const communityLinks = [
-  { label: "Login", href: "/app/auth/callback" },
+
   { label: "Sabha", href: "/blogs" },
 ];
 

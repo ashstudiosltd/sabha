@@ -181,7 +181,6 @@ export default function BlogNavbar({
     setMenuOpen(false);
     await supabase.auth.signOut();
     setProfile(null);
-    router.push("/blogs");
     router.refresh();
   };
 
@@ -285,105 +284,111 @@ export default function BlogNavbar({
               Post
             </Link>
 
-            {/* Profile */}
-            {profile ? (
-              <div ref={menuRef} className="relative">
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen((v) => !v)}
-                  aria-label="Account menu"
-                  aria-haspopup="menu"
-                  aria-expanded={menuOpen}
-                  className="flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full text-[#2f80ed] transition-opacity hover:opacity-80"
-                >
-                  {profile.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={profile.avatarUrl}
-                      alt=""
-                      referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <CircleUser
-                      className="h-[30px] w-[30px]"
-                      strokeWidth={1.5}
-                    />
-                  )}
-                </button>
+            {/* Profile / Account menu (works both logged in and logged out) */}
+            <div ref={menuRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((v) => !v)}
+                aria-label={profile ? "Account menu" : "Sign in menu"}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                className="flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full text-[#2f80ed] transition-opacity hover:opacity-80"
+              >
+                {profile?.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.avatarUrl}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <CircleUser
+                    className="h-[30px] w-[30px]"
+                    strokeWidth={1.5}
+                  />
+                )}
+              </button>
 
-                {menuOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-full mt-2 w-[230px] overflow-hidden rounded-[12px] border border-[#d2d2d7] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
-                  >
+              {menuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-2 w-[230px] overflow-hidden rounded-[12px] border border-[#d2d2d7] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                >
+                  {profile && (
                     <div className="border-b border-[#e8e8ed] px-4 py-3">
                       <p className="truncate text-[15px] font-semibold text-[#1d1d1f]">
                         {profile.username}
                       </p>
                     </div>
+                  )}
 
-                    {/* Links shown here on small screens */}
-                    <div className="border-b border-[#e8e8ed] py-1 md:hidden">
-                      <Link
-                        role="menuitem"
-                        href="/blogs"
-                        onClick={() => setMenuOpen(false)}
-                        className={itemClass}
-                      >
-                        Blogs
-                      </Link>
-                      <Link
-                        role="menuitem"
-                        href="/blogs?sort=recent"
-                        onClick={() => setMenuOpen(false)}
-                        className={itemClass}
-                      >
-                        Recent posts
-                      </Link>
-                    </div>
+                  {/* Blogs / Recent posts shown here on small screens, both states */}
+                  <div className="border-b border-[#e8e8ed] py-1 md:hidden">
+                    <Link
+                      role="menuitem"
+                      href="/blogs"
+                      onClick={() => setMenuOpen(false)}
+                      className={itemClass}
+                    >
+                      Blogs
+                    </Link>
+                    <Link
+                      role="menuitem"
+                      href="/blogs?sort=recent"
+                      onClick={() => setMenuOpen(false)}
+                      className={itemClass}
+                    >
+                      Recent posts
+                    </Link>
+                  </div>
 
+                  {profile ? (
+                    <>
+                      <div className="py-1">
+                        <Link
+                          role="menuitem"
+                          href={`/profile/${profile.username}`}
+                          onClick={() => setMenuOpen(false)}
+                          className={itemClass}
+                        >
+                          View Profile
+                        </Link>
+                        <Link
+                          role="menuitem"
+                          href="/settings/profile"
+                          onClick={() => setMenuOpen(false)}
+                          className={itemClass}
+                        >
+                          Edit Profile
+                        </Link>
+                      </div>
+                      <div className="border-t border-[#e8e8ed] py-1">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={handleSignOut}
+                          className={`${itemClass} text-[#d70015]`}
+                        >
+                          Sign out
+                        </button>
+                      </div>
+                    </>
+                  ) : (
                     <div className="py-1">
                       <Link
                         role="menuitem"
-                        href={`/profile/${profile.username}`}
+                        href="/app/auth"
                         onClick={() => setMenuOpen(false)}
                         className={itemClass}
                       >
-                        View Profile
-                      </Link>
-                      <Link
-                        role="menuitem"
-                        href="/settings/profile"
-                        onClick={() => setMenuOpen(false)}
-                        className={itemClass}
-                      >
-                        Edit Profile
+                        Sign in
                       </Link>
                     </div>
-
-                    <div className="border-t border-[#e8e8ed] py-1">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleSignOut}
-                        className={`${itemClass} text-[#d70015]`}
-                      >
-                        Sign out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href="/login"
-                aria-label="Sign in"
-                className="flex h-[30px] w-[30px] items-center justify-center text-[#2f80ed] transition-opacity hover:opacity-80"
-              >
-                <CircleUser className="h-[30px] w-[30px]" strokeWidth={1.5} />
-              </Link>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
