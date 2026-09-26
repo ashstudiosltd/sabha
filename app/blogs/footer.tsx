@@ -236,7 +236,7 @@ export default function Footer() {
           }}
         >
           <p className="text-[11px] text-black">
-            © 2024 Ashstudios. All rights reserved.
+            2026 Devvrats. All rights reserved.
           </p>
         </div>
       </div>
