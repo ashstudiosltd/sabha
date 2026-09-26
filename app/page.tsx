@@ -6,7 +6,7 @@ import AuthGate from "./auth/authgate";
 
 export default function LokPage() {
   return (
-    <div style={{  minHeight: "100vh" }}>
+    <div className="bg-gradient-to-b from-black via-gray-900 to-purple-950 opacity-90" style={{ minHeight: "100vh" }}>
       <AuthGate>
       <Nav />
       <Hero />
