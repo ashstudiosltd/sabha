@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import type { BlogPost } from "@/data/blog";
-import ShareSheet from "@/app/components/ShareSheet";
-import { ShareIcon } from "../../blogs/icons";
+import ShareSheet from "@/components/ShareSheet";
+import { ShareIcon } from "../../app/blogs/icons";
 
 interface BlogCardProps {
   post: BlogPost;

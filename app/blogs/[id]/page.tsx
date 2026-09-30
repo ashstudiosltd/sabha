@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import {
   getBlogPostByIdServer,
 } from "@/lib/supabase/blog-server";
-import Footer from "@/app/components/blogs/footer";
+import Footer from "@/components/blogs/footer";
 interface BlogPostPageProps {
   params: Promise<{
     id: string;

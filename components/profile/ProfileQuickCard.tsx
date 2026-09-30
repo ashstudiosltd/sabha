@@ -8,7 +8,7 @@ import {
   type PublicProfile,
 } from "@/lib/supabase/profile";
 
-import ProfileAction from "@/app/components/profile/ProfileAction";
+import ProfileAction from "@/components/profile/ProfileAction";
 
 interface ProfileQuickCardProps {
   username: string;

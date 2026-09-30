@@ -30,8 +30,8 @@ import {
   CloseIcon,
 } from "@/app/blogs/icons";
 
-import ProfileQuickCard from "@/app/components/profile/ProfileQuickCard";
-import ShareSheet from "@/app/components/ShareSheet";
+import ProfileQuickCard from "@/components/profile/ProfileQuickCard";
+import ShareSheet from "@/components/ShareSheet";
 
 /*
   THEMING HOOKS

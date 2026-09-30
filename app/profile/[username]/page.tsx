@@ -11,12 +11,12 @@ import {
   Users,
 } from "lucide-react";
 
-import ProfileAction from "@/app/components/profile/ProfileAction";
-import BlogNavbar from "@/app/components/blogs/blognav"; // <- adjust to wherever the file lives
+import ProfileAction from "@/components/profile/ProfileAction";
+import BlogNavbar from "@/components/blogs/blognav"; // <- adjust to wherever the file lives
 
 import { getPublicProfile } from "@/lib/supabase/profile";
 import { getBlogPosts } from "@/lib/supabase/blog";
-import Footer from "@/app/components/blogs/footer";
+import Footer from "@/components/blogs/footer";
 
 interface ProfilePageProps {
   params: Promise<{

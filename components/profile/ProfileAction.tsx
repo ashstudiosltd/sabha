@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
-import ProfileFollowButton from "@/app/components/profile/ProfileFollowButton";
+import ProfileFollowButton from "@/components/profile/ProfileFollowButton";
 
 interface ProfileActionProps {
   profileId: string;

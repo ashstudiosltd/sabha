@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import ConnectionLoader from "@/app/components/connection-loader";
+import ConnectionLoader from "@/components/connection-loader";
 
 const STORAGE_KEY = "sabha:profile-loader-shown";
 const DURATION = 2000;

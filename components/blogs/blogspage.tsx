@@ -5,9 +5,9 @@ import { useSearchParams } from "next/navigation";
 import type { BlogPost, Category } from "@/data/blog";
 import { deleteBlogPost, getBlogPosts } from "@/lib/supabase/blog";
 import { createClient } from "@/lib/supabase/client";
-import BlogFeed from "../blogs/blogsfeed";
+import BlogFeed from "./blogsfeed";
 import BlogSidebar from "./blogsidebar";
-import BlogDetailModal from "../blogs/blogdetailmodal";
+import BlogDetailModal from "./blogdetailmodal";
 
 function BlogsPageContent() {
   const [supabase] = useState(() => createClient());

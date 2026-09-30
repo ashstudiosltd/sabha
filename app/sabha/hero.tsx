@@ -204,7 +204,7 @@ export default function SabhaHero() {
             <NavigationItem
               title="FEED"
               subtitle="Community"
-              href="/sabha/feed"
+              href="/feed"
               mouseX={mouseX}
               mouseY={mouseY}
             />
