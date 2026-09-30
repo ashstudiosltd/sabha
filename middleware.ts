@@ -84,13 +84,13 @@ export async function middleware(
    * These can be opened without signing in.
    */
   const isPublicRoute =
-    pathname === "/" ||
-    pathname.startsWith("/blogs") ||
-    pathname.startsWith("/profile") ||
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/sabha");
+  pathname === "/" ||
+  pathname.startsWith("/blogs") ||
+  pathname.startsWith("/profile") ||
+  pathname.startsWith("/auth") ||
+  pathname.startsWith("/login") ||
+  pathname.startsWith("/register") ||
+  pathname.startsWith("/sabha") ;
 
   /*
    * Everything else can remain protected.

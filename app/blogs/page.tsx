@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react'
-import BlogsPage from './blogspage';
-import Footer from './footer';
+import BlogsPage from '../components/blogs/blogspage';
+import Footer from '../components/blogs/footer';
 const blog= () => {
   const [query, setQuery] = useState('');
 

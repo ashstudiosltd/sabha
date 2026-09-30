@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import type { BlogPost } from "@/data/blog";
 import ShareSheet from "@/app/components/ShareSheet";
-import { ShareIcon } from "./icons";
+import { ShareIcon } from "../../blogs/icons";
 
 interface BlogCardProps {
   post: BlogPost;

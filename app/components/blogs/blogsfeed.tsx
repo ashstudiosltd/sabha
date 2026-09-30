@@ -1,6 +1,6 @@
 "use client";
 import type { BlogPost } from "@/data/blog";
-import BlogCard from "./blogcard";
+import BlogCard from "../blogs/blogcard";
 
 interface BlogFeedProps {
   posts: BlogPost[];

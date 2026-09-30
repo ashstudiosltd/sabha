@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Roboto as RobotoFont } from "next/font/google";
-import BlogNavbar from "@/app/blogs/blognav";
+import BlogNavbar from "@/app/components/blogs/blognav";
 
 const Roboto = RobotoFont({
   weight: "400",

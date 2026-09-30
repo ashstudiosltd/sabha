@@ -28,9 +28,9 @@ import {
   CommentIcon,
   ShareIcon,
   CloseIcon,
-} from "./icons";
+} from "@/app/blogs/icons";
 
-import ProfileQuickCard from "@/app/components/ProfileQuickCard";
+import ProfileQuickCard from "@/app/components/profile/ProfileQuickCard";
 import ShareSheet from "@/app/components/ShareSheet";
 
 /*
