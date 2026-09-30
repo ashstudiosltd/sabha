@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 
-
 type PostType = "conversation" | "project";
 type Screenshot = { file: File; preview: string };
 
-const labelClass = "mb-1.5 block text-[13px] font-medium text-[#6e6e73]";
+const labelClass =
+  "mb-1.5 block text-[13px] font-medium text-[#6e6e73]";
+
 const fieldClass =
   "w-full rounded-[12px] border border-[#d2d2d7] bg-white px-4 py-3 text-[16px] text-[#1d1d1f] outline-none transition-colors placeholder:text-[#6e6e73] focus:border-[#0071e3] disabled:opacity-60";
 
@@ -38,9 +39,15 @@ export default function NewFeedPost({
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleScreenshots = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleScreenshots = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = Array.from(e.target.files ?? []);
-    if (screenshotInput.current) screenshotInput.current.value = "";
+
+    if (screenshotInput.current) {
+      screenshotInput.current.value = "";
+    }
+
     if (!files.length) return;
 
     if (files.some((f) => !f.type.startsWith("image/"))) {
@@ -49,7 +56,12 @@ export default function NewFeedPost({
     }
 
     setError(null);
-    const selected = files.slice(0, 5 - screenshots.length);
+
+    const selected = files.slice(
+      0,
+      5 - screenshots.length
+    );
+
     setScreenshots((cur) => [
       ...cur,
       ...selected.map((file) => ({
@@ -60,15 +72,24 @@ export default function NewFeedPost({
   };
 
   const removeScreenshot = (index: number) => {
-    URL.revokeObjectURL(screenshots[index].preview);
-    setScreenshots((cur) => cur.filter((_, i) => i !== index));
+    URL.revokeObjectURL(
+      screenshots[index].preview
+    );
+
+    setScreenshots((cur) =>
+      cur.filter((_, i) => i !== index)
+    );
   };
 
-  const handleReadme = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReadme = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     const name = file.name.toLowerCase();
+
     if (!name.endsWith(".md") && name !== "readme") {
       setError("Please upload a README.md file.");
       return;
@@ -78,15 +99,28 @@ export default function NewFeedPost({
     setReadme(file);
   };
 
-  const uploadFile = async (file: File, feedItemId: string) => {
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-    const path = `${userId}/${feedItemId}/${Date.now()}-${safeName}`;
+  const uploadFile = async (
+    file: File,
+    feedItemId: string,
+    authenticatedUserId: string
+  ) => {
+    const safeName = file.name.replace(
+      /[^a-zA-Z0-9._-]/g,
+      "-"
+    );
+
+    const path = `${authenticatedUserId}/${feedItemId}/${Date.now()}-${safeName}`;
 
     const { error } = await supabase.storage
       .from("feed-assets")
-      .upload(path, file, { upsert: false });
+      .upload(path, file, {
+        upsert: false,
+      });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
+
     return path;
   };
 
@@ -94,108 +128,243 @@ export default function NewFeedPost({
     feedItemId: string,
     kind: "screenshot" | "readme",
     file: File,
-    sortOrder: number
+    sortOrder: number,
+    authenticatedUserId: string
   ) => {
-    const path = await uploadFile(file, feedItemId);
+    const path = await uploadFile(
+      file,
+      feedItemId,
+      authenticatedUserId
+    );
 
-    const { error } = await supabase.from("feed_attachments").insert({
-      feed_item_id: feedItemId,
-      type: kind,
-      url: path,
-      name: file.name,
-      sort_order: sortOrder,
-    });
+    const { error } = await supabase
+      .from("feed_attachments")
+      .insert({
+        feed_item_id: feedItemId,
+        type: kind,
+        url: path,
+        name: file.name,
+        sort_order: sortOrder,
+      });
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
   };
 
   const handlePublish = async () => {
     if (publishing) return;
+
     setError(null);
 
-    if (type === "conversation" && !content.trim()) {
+    if (
+      type === "conversation" &&
+      !content.trim()
+    ) {
       setError("Write something before posting.");
       return;
     }
 
-    if (type === "project" && !title.trim()) {
+    if (
+      type === "project" &&
+      !title.trim()
+    ) {
       setError("Give your project a title.");
       return;
     }
 
     setPublishing(true);
+
     let feedItemId: string | null = null;
 
     try {
-      const { data: feedItem, error: feedError } = await supabase
+      /*
+       * Get the actual authenticated Supabase user.
+       *
+       * This is important because the RLS policy requires:
+       *
+       * author_id = auth.uid()
+       */
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!user) {
+        throw new Error(
+          "You must be signed in to create a post."
+        );
+      }
+
+      /*
+       * Create the main feed item.
+       *
+       * IMPORTANT:
+       * Use user.id from the Supabase session,
+       * not the userId prop.
+       */
+      const {
+        data: feedItem,
+        error: feedError,
+      } = await supabase
         .from("feed_items")
-        .insert({ author_id: userId, type, clan_id: clanId ?? null })
+        .insert({
+          author_id: user.id,
+          type,
+          clan_id: clanId ?? null,
+        })
         .select("id")
         .single();
 
       if (feedError || !feedItem) {
-        throw new Error(feedError?.message ?? "Failed to create post.");
+        throw new Error(
+          feedError?.message ??
+            "Failed to create post."
+        );
       }
 
       feedItemId = feedItem.id;
 
+      /*
+       * CONVERSATION
+       */
       if (type === "conversation") {
         const { error } = await supabase
           .from("conversations")
-          .insert({ id: feedItem.id, content: content.trim() });
-        if (error) throw new Error(error.message);
-      } else {
-        const { error } = await supabase.from("projects").insert({
-          id: feedItem.id,
-          title: title.trim(),
-          description: description.trim() || null,
-          project_url: projectUrl.trim() || null,
-        });
-        if (error) throw new Error(error.message);
+          .insert({
+            id: feedItem.id,
+            content: content.trim(),
+          });
 
-        for (let i = 0; i < screenshots.length; i++) {
-          await addAttachment(feedItem.id, "screenshot", screenshots[i].file, i);
-        }
-
-        if (readme) {
-          await addAttachment(feedItem.id, "readme", readme, 0);
+        if (error) {
+          throw new Error(error.message);
         }
       }
 
-      screenshots.forEach((s) => URL.revokeObjectURL(s.preview));
-      router.push(clanId ? `/clans/${clanId}` : "/feed");
+      /*
+       * PROJECT
+       */
+      else {
+        const { error } = await supabase
+          .from("projects")
+          .insert({
+            id: feedItem.id,
+            title: title.trim(),
+            description:
+              description.trim() || null,
+            project_url:
+              projectUrl.trim() || null,
+          });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        /*
+         * Upload screenshots
+         */
+        for (
+          let i = 0;
+          i < screenshots.length;
+          i++
+        ) {
+          await addAttachment(
+            feedItem.id,
+            "screenshot",
+            screenshots[i].file,
+            i,
+            user.id
+          );
+        }
+
+        /*
+         * Upload README
+         */
+        if (readme) {
+          await addAttachment(
+            feedItem.id,
+            "readme",
+            readme,
+            0,
+            user.id
+          );
+        }
+      }
+
+      /*
+       * Clean up local screenshot previews
+       */
+      screenshots.forEach((s) =>
+        URL.revokeObjectURL(s.preview)
+      );
+
+      /*
+       * Redirect after successful publish
+       */
+      router.push(
+        clanId
+          ? `/clans/${clanId}`
+          : "/feed"
+      );
+
       router.refresh();
     } catch (err) {
-      // Don't leave a half-created post behind
+      /*
+       * Don't leave a half-created post behind.
+       */
       if (feedItemId) {
-        await supabase.from("feed_items").delete().eq("id", feedItemId);
+        await supabase
+          .from("feed_items")
+          .delete()
+          .eq("id", feedItemId);
       }
+
       console.error(err);
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong."
+      );
+
       setPublishing(false);
     }
   };
 
-  const backHref = clanId ? `/clans/${clanId}` : "/feed";
+  const backHref = clanId
+    ? `/clans/${clanId}`
+    : "/feed";
 
   return (
     <main className="min-h-screen bg-[#f5f5f7] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif]">
       <div className="mx-auto w-full max-w-[760px] px-4 py-8 sm:px-8 sm:py-12">
-        <Link href={backHref} className="text-[14px] text-[#0066cc] hover:underline">
+        <Link
+          href={backHref}
+          className="text-[14px] text-[#0066cc] hover:underline"
+        >
           ← Back to {clanId ? "clan" : "feed"}
         </Link>
 
         <h1 className="mt-4 text-[32px] font-semibold tracking-[-0.02em] text-[#1d1d1f] sm:text-[40px]">
           Create.
         </h1>
+
         <p className="mt-1 text-[15px] text-[#6e6e73]">
-          {clanId ? "Share something with this clan." : "Share something with Sabha."}
+          {clanId
+            ? "Share something with this clan."
+            : "Share something with Sabha."}
         </p>
 
         <div className="mt-6 space-y-5 rounded-[18px] bg-white p-5 sm:p-8">
           {/* Type switch */}
           <div className="grid grid-cols-2 gap-1 rounded-[12px] bg-[#f5f5f7] p-1">
-            {(["conversation", "project"] as const).map((t) => (
+            {(
+              ["conversation", "project"] as const
+            ).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -218,17 +387,24 @@ export default function NewFeedPost({
           {type === "conversation" ? (
             <div>
               <div className="flex items-baseline justify-between">
-                <label htmlFor="content" className={labelClass}>
+                <label
+                  htmlFor="content"
+                  className={labelClass}
+                >
                   Conversation
                 </label>
+
                 <span className="text-[12px] text-[#6e6e73]">
                   {content.length}/10000
                 </span>
               </div>
+
               <textarea
                 id="content"
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e) =>
+                  setContent(e.target.value)
+                }
                 placeholder="What's on your mind?"
                 maxLength={10000}
                 rows={10}
@@ -239,20 +415,28 @@ export default function NewFeedPost({
             </div>
           ) : (
             <>
+              {/* Project name */}
               <div>
                 <div className="flex items-baseline justify-between">
-                  <label htmlFor="title" className={labelClass}>
+                  <label
+                    htmlFor="title"
+                    className={labelClass}
+                  >
                     Project name
                   </label>
+
                   <span className="text-[12px] text-[#6e6e73]">
                     {title.length}/150
                   </span>
                 </div>
+
                 <input
                   id="title"
                   type="text"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) =>
+                    setTitle(e.target.value)
+                  }
                   placeholder="Project name"
                   maxLength={150}
                   autoFocus
@@ -261,19 +445,27 @@ export default function NewFeedPost({
                 />
               </div>
 
+              {/* Description */}
               <div>
                 <div className="flex items-baseline justify-between">
-                  <label htmlFor="description" className={labelClass}>
+                  <label
+                    htmlFor="description"
+                    className={labelClass}
+                  >
                     Description
                   </label>
+
                   <span className="text-[12px] text-[#6e6e73]">
                     {description.length}/10000
                   </span>
                 </div>
+
                 <textarea
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>
+                    setDescription(e.target.value)
+                  }
                   placeholder="What are you building?"
                   maxLength={10000}
                   rows={6}
@@ -282,15 +474,22 @@ export default function NewFeedPost({
                 />
               </div>
 
+              {/* Project URL */}
               <div>
-                <label htmlFor="url" className={labelClass}>
+                <label
+                  htmlFor="url"
+                  className={labelClass}
+                >
                   Project URL
                 </label>
+
                 <input
                   id="url"
                   type="url"
                   value={projectUrl}
-                  onChange={(e) => setProjectUrl(e.target.value)}
+                  onChange={(e) =>
+                    setProjectUrl(e.target.value)
+                  }
                   placeholder="https://"
                   disabled={publishing}
                   className={fieldClass}
@@ -300,7 +499,10 @@ export default function NewFeedPost({
               {/* Screenshots */}
               <div>
                 <div className="flex items-baseline justify-between">
-                  <span className={labelClass}>Screenshots</span>
+                  <span className={labelClass}>
+                    Screenshots
+                  </span>
+
                   <span className="text-[12px] text-[#6e6e73]">
                     {screenshots.length}/5
                   </span>
@@ -317,8 +519,13 @@ export default function NewFeedPost({
 
                 <button
                   type="button"
-                  onClick={() => screenshotInput.current?.click()}
-                  disabled={publishing || screenshots.length >= 5}
+                  onClick={() =>
+                    screenshotInput.current?.click()
+                  }
+                  disabled={
+                    publishing ||
+                    screenshots.length >= 5
+                  }
                   className="w-full rounded-[12px] border border-dashed border-[#d2d2d7] px-4 py-5 text-[14px] text-[#6e6e73] transition hover:border-[#86868b] hover:text-[#1d1d1f] disabled:opacity-40"
                 >
                   + Add screenshots
@@ -337,9 +544,12 @@ export default function NewFeedPost({
                           alt=""
                           className="h-full w-full object-cover"
                         />
+
                         <button
                           type="button"
-                          onClick={() => removeScreenshot(i)}
+                          onClick={() =>
+                            removeScreenshot(i)
+                          }
                           aria-label="Remove screenshot"
                           className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-xs text-white sm:opacity-0 sm:transition sm:group-hover:opacity-100"
                         >
@@ -353,7 +563,10 @@ export default function NewFeedPost({
 
               {/* README */}
               <div>
-                <span className={labelClass}>README</span>
+                <span className={labelClass}>
+                  README
+                </span>
+
                 <input
                   ref={readmeInput}
                   type="file"
@@ -361,18 +574,24 @@ export default function NewFeedPost({
                   hidden
                   onChange={handleReadme}
                 />
+
                 <button
                   type="button"
-                  onClick={() => readmeInput.current?.click()}
+                  onClick={() =>
+                    readmeInput.current?.click()
+                  }
                   disabled={publishing}
                   className="w-full rounded-[12px] border border-dashed border-[#d2d2d7] px-4 py-4 text-left text-[14px] text-[#6e6e73] transition hover:border-[#86868b] hover:text-[#1d1d1f]"
                 >
-                  {readme ? `📄 ${readme.name}` : "+ Attach README.md"}
+                  {readme
+                    ? `📄 ${readme.name}`
+                    : "+ Attach README.md"}
                 </button>
               </div>
             </>
           )}
 
+          {/* Error */}
           {error && (
             <div
               role="alert"
@@ -382,12 +601,15 @@ export default function NewFeedPost({
             </div>
           )}
 
+          {/* Actions */}
           <div className="flex justify-end gap-3 pt-1">
             <Link
               href={backHref}
               aria-disabled={publishing}
               className={`rounded-[8px] border border-[#d2d2d7] px-5 py-2.5 text-center text-[15px] text-[#1d1d1f] hover:bg-[#f5f5f7] ${
-                publishing ? "pointer-events-none opacity-40" : ""
+                publishing
+                  ? "pointer-events-none opacity-40"
+                  : ""
               }`}
             >
               Cancel
@@ -399,7 +621,9 @@ export default function NewFeedPost({
               disabled={publishing}
               className="rounded-[8px] bg-[#1d1d1f] px-5 py-2.5 text-[15px] font-medium text-white transition-all hover:bg-black active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {publishing ? "Publishing…" : "Publish"}
+              {publishing
+                ? "Publishing…"
+                : "Publish"}
             </button>
           </div>
         </div>
