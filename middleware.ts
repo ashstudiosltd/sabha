@@ -10,6 +10,7 @@ import {
 export async function middleware(
   request: NextRequest
 ) {
+  if (request.nextUrl.pathname === "/api/anu/blogs" || request.nextUrl.pathname === "/api/anu/blogs-context") return NextResponse.next();
   let response =
     NextResponse.next({
       request,

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AnuReveal, AnuTitle, useBlogSummary } from "./anu/anu-summary";
 import {
   useCallback,
   useEffect,
@@ -75,6 +76,7 @@ export default function BlogDetailModal({
   canDelete,
 }: BlogDetailModalProps) {
   const [visible, setVisible] = useState(false);
+  const blogSummary = useBlogSummary(post);
 
   const [confirmDelete, setConfirmDelete] =
     useState(false);
@@ -151,6 +153,10 @@ export default function BlogDetailModal({
       clamp((max - top) / FADE_RANGE).toFixed(3)
     );
   }, []);
+
+  useEffect(() => {
+    bodyRef.current?.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }, [blogSummary.active]);
 
   /* ---------------- OPEN MODAL ---------------- */
 
@@ -658,6 +664,8 @@ export default function BlogDetailModal({
                 )}
               </div>
 
+              <div className="ml-auto flex shrink-0 items-center gap-1">
+              <button type="button" onClick={() => void blogSummary.toggle()} disabled={blogSummary.busy} aria-pressed={blogSummary.active} className="shrink-0 rounded-[8px] bg-[#a78bfa]/10 px-3 py-2 text-[12px] font-medium text-[#7255b4] transition-colors hover:bg-[#a78bfa]/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a78bfa] disabled:opacity-50">{blogSummary.busy ? "Summarizing…" : blogSummary.active ? "See original" : "Summary"}</button>
               <button
                 type="button"
                 onClick={handleClose}
@@ -671,6 +679,7 @@ export default function BlogDetailModal({
               >
                 <CloseIcon className="h-[18px] w-[18px]" />
               </button>
+              </div>
             </div>
 
             {/* ---------- SCROLLING BODY (cropped at the header edge) ---------- */}
@@ -696,7 +705,7 @@ export default function BlogDetailModal({
                   </p>
 
                   <h1 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#1d1d1f] sm:text-[40px]">
-                    {post.title}
+                    {blogSummary.active ? <AnuTitle text={blogSummary.title} animate={blogSummary.fresh} /> : post.title}
                   </h1>
 
                   {post.coverImage ? (
@@ -710,15 +719,10 @@ export default function BlogDetailModal({
                   ) : null}
 
                   <div className="mt-5 space-y-4 text-[16px] leading-[1.6] text-[#424245]">
-                    {post.content.map(
-                      (paragraph, index) => (
-                        <p key={index}>
-                          {paragraph}
-                        </p>
-                      )
-                    )}
+                    {blogSummary.active ? <AnuReveal text={blogSummary.summary} animate={blogSummary.fresh} delay={200} /> : post.content.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
                   </div>
 
+                  {blogSummary.error && <p role="alert" className="mt-3 text-[12px] text-[#b42318]">{blogSummary.error}</p>}
                   {/* TAGS (themeable) */}
 
                   {post.tags.length > 0 && (

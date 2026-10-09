@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import type { BlogPost, Category } from "@/data/blog";
 import { deleteBlogPost, getBlogPosts } from "@/lib/supabase/blog";
 import { createClient } from "@/lib/supabase/client";
+import { BlogsAnuCompanion } from "./anu/anu-panel";
 import BlogFeed from "./blogsfeed";
 import BlogSidebar from "./blogsidebar";
 import BlogDetailModal from "./blogdetailmodal";
@@ -114,6 +115,7 @@ function BlogsPageContent() {
           />
         </div>
       </div>
+      <BlogsAnuCompanion hidden={!!selectedPost} />
       <BlogDetailModal
         post={selectedPost}
         onClose={() => setSelectedPost(null)}

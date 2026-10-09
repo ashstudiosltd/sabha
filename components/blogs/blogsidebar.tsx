@@ -44,7 +44,7 @@ export default function BlogSidebar({
     }));
 
   return (
-    <aside className="hidden bg-transparent lg:sticky lg:top-8 lg:block lg:space-y-5">
+    <aside className="hidden self-start bg-transparent lg:sticky lg:top-[78px] lg:block lg:space-y-5">
       <SidebarSection title="Explore">
         <CategoryList
           categoriesList={categories}

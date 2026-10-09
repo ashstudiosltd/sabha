@@ -1,14 +1,22 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
+import { sabhaAuthReturn } from "@/lib/auth-return";
 import { createClient } from "@/lib/supabase/client";
 import { useSearchParams } from "next/navigation";
 
 function AuthContent() {
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const next = searchParams.get("next") || "/";
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (active && data.user) window.location.replace(sabhaAuthReturn(next, window.location.origin));
+    });
+    return () => { active = false; };
+  }, [supabase, next]);
 
   const signInWithGoogle = async () => {
     setLoading(true);
@@ -16,7 +24,7 @@ function AuthContent() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
-          next
+          sabhaAuthReturn(next, window.location.origin)
         )}`,
       },
     });
@@ -32,7 +40,7 @@ function AuthContent() {
       provider: "github",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(
-          next
+          sabhaAuthReturn(next, window.location.origin)
         )}`,
       },
     });

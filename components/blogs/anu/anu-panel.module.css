@@ -1,0 +1,63 @@
+.companion {
+  position: fixed;
+  right: 28px;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 45;
+  color: #534166;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.launcher { position: relative; display: flex; justify-content: flex-end; }
+.launchButton { display: grid; place-items: center; width: 56px; height: 56px; padding: 0; cursor: pointer; border: 0; border-radius: 50%; background: transparent; outline-offset: 5px; -webkit-tap-highlight-color: transparent; }
+.launchButton:focus-visible, .iconButton:focus-visible, .prompt:focus-visible, .send:focus-visible { outline: 2px solid #a78bfa; outline-offset: 4px; }
+.orb { --dot-size: 42px; }
+/* Greater specificity preserves the size against the canonical default. */
+.companion .orb { --dot-size: 42px; }
+.greeting { position: absolute; right: 0; bottom: 66px; width: min(250px, calc(100vw - 40px)); padding: 17px 19px; border: 1px solid #ebe6f0; border-radius: 18px 18px 5px 18px; background: #fff; box-shadow: 0 10px 35px #3020400d; opacity: 0; visibility: hidden; transform: translateY(4px); pointer-events: none; transition: opacity 130ms ease-out, transform 180ms cubic-bezier(.22,.61,.36,1), visibility 130ms; }
+.launcher:hover .greeting, .launcher:focus-within .greeting { opacity: 1; visibility: visible; transform: translateY(0); transition-delay: 0s; }
+.greetingTitle { display: block; font-size: 14px; font-weight: 500; letter-spacing: -.02em; }
+.greetingText { margin: 6px 0 0; color: #86808d; font-size: 12px; line-height: 1.6; }
+.hoverWord { display: inline-block; opacity: 0; transform: translateY(3px); filter: blur(2px); }
+.launcher:hover .hoverWord, .launcher:focus-within .hoverWord { animation: hoverReveal 220ms cubic-bezier(.22,.61,.36,1) both; animation-delay: var(--word-delay, 0ms); }
+.window { position: absolute; right: 0; bottom: 70px; width: min(390px, calc(100vw - 32px)); max-height: min(570px, calc(100dvh - 140px)); background: #fff; border-radius: 24px; overflow: hidden; border: 1px solid #e8e2ef; box-shadow: 0 20px 75px #3523481a, 0 2px 12px #35234808; isolation: isolate; transform-origin: bottom right; }
+.panel { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; overflow: hidden; background: #fff; color: #1d1d1f; }
+.header { display: flex; flex: 0 0 auto; justify-content: flex-end; align-items: center; gap: 2px; padding: 12px 15px 0; }
+.iconButton { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #96909e; cursor: pointer; transition: background 120ms; }
+.iconButton:hover { background: #f5f3f9; }
+.iconButton:disabled { opacity: .4; cursor: default; }
+.log { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 20px; scrollbar-width: thin; scrollbar-color: #e5dfee transparent; }
+.welcome { padding: 8px 4px 12px; }
+.welcomeTitle { margin: 0; font-size: 25px; font-weight: 500; line-height: 1.2; letter-spacing: -.04em; }
+.welcomeText { margin: 12px 0 0; max-width: 270px; font-size: 14px; line-height: 1.7; color: #86808d; }
+.message { margin-bottom: 16px; animation: messageEnter 300ms cubic-bezier(.22,.61,.36,1) both; }
+.user { margin-left: 20px; }
+.assistant { margin-right: 8px; }
+.bubble { white-space: pre-wrap; overflow-wrap: anywhere; border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.6; }
+.bubble p { margin: 0; }
+.bubble p + p { margin-top: .75em; }
+.user .bubble { background: #f3f3f5; }
+.assistant .bubble { background: #a78bfa1a; color: #554473; }
+.sources { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 10px; }
+.source { color: #8b7c9c; font-size: 11px; line-height: 1.5; text-decoration: underline; text-underline-offset: 3px; transition: color 120ms; }
+.source:hover { border-color: #c4b5fd; color: #7255b4; }
+.thinking { font-size: 12px; color: #8b71b5; animation: breathe 1.8s ease-in-out infinite; }
+.error { font-size: 12px; line-height: 1.6; color: #b42318; }
+.composer { flex: 0 0 auto; padding: 8px 16px 16px; }
+.prompts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.prompt { border: 1px solid #e9e5ef; border-radius: 999px; background: #fff; padding: 6px 10px; color: #7255b4; font-size: 11px; text-align: left; line-height: 1.5; cursor: pointer; transition: background 120ms; }
+.prompt:hover { background: #f6f3fb; }
+.prompt:disabled { opacity: .4; cursor: default; }
+.form { display: flex; align-items: center; gap: 8px; padding: 9px 10px 9px 12px; border: 1px solid #ece8f0; border-radius: 16px; background: #faf9fc; transition: border-color 120ms; }
+.form:focus-within { border-color: #b49ade; }
+.input { display: block; flex: 1 1 0; min-width: 0; max-height: 112px; padding: 0; resize: none; border: 0; background: transparent; color: #1d1d1f; font: inherit; font-size: 13px; line-height: 20px; outline: none; }
+.input::placeholder { color: #96909e; }
+.send { display: grid; place-items: center; flex: 0 0 28px; height: 28px; border: 0; border-radius: 50%; background: #7255b4; color: #fff; cursor: pointer; transition: opacity 120ms; }
+.send:hover { opacity: .85; }
+.send:disabled { opacity: .35; cursor: default; }
+.revealWord { display: inline-block; animation: wordArrive .5s cubic-bezier(.22,.61,.36,1) both; }
+@keyframes hoverReveal { to { opacity: 1; filter: blur(0); transform: translateY(0); } }
+@keyframes wordArrive { from { opacity: 0; filter: blur(5px); transform: translateY(4px); } to { opacity: 1; filter: blur(0); transform: translateY(0); } }
+@keyframes messageEnter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes breathe { 50% { opacity: .45; } }
+@media (max-width: 640px) { .input { font-size: 16px; } }
+@media (max-width: 480px) { .companion { right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); } .window { max-height: min(570px, calc(100dvh - 120px)); bottom: 66px; border-radius: 20px; } .launchButton { width: 52px; height: 52px; } }
+@media (prefers-reduced-motion: reduce) { .message, .thinking, .revealWord, .launcher:hover .hoverWord, .launcher:focus-within .hoverWord { animation: none; } .hoverWord { opacity: 1; filter: none; transform: none; } .greeting { transition: none; } }
