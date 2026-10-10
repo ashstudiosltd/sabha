@@ -50,7 +50,7 @@ The summary intent is handled by central Anu and returns plain article prose,
 without a chat interface, preamble, or follow-up prompts.
 
 The browser calls `/api/anu/blogs`. The server forwards to central Anu at
-`ANU_API_URL` (development default `http://127.0.0.1:5173`). Anu retrieves current
+`ANU_API_URL` (development default `http://127.0.0.1:5173`, production/preview default `https://anu.devvrats.in`). Anu retrieves current
 reference data from `/api/anu/blogs-context`, using an anonymous Supabase client
 with existing RLS, no user cookies, and no service-role key. Only selected public
 post fields and public author names/usernames are returned; comments and account
@@ -60,8 +60,7 @@ visibility in RLS and in this data endpoint before use.
 
 Run Sabha on port 3000 and Anu on port 5173. If Sabha's port changes, set
 `SABHA_PUBLIC_URL` in Anu's runtime configuration. Production requires setting
-`ANU_API_URL` in Sabha and `SABHA_PUBLIC_URL` in Anu to their deployed HTTPS origins.
-No deployment was made. The per-instance rate budgets are local safeguards, not
+`ANU_API_URL` in Sabha and `SABHA_PUBLIC_URL` in Anu to their deployed HTTPS origins. Set the server-only `ANU_INTEGRATION_SECRET` in Sabha to the exact production value used by Anu. These two Sabha variables are configured on Vercel for Production and Preview. Deploy Sabha’s current source to activate the route fix and its `/api/anu/blogs-context` endpoint; changing environment variables does not update an existing deployment. No Sabha deployment was made during this connection fix. The per-instance rate budgets are local safeguards, not
 durable production quotas. Blog content and messages are processed by Anu's
 Gemini service; clearing session history does not erase provider-side data.
 
@@ -88,3 +87,9 @@ Sources appear as small Reference links, deduplicated across the conversation.
 New summaries return validated title/body fields from central Anu, revealed in
 sequence and cached together. Legacy cached summary text is preserved without
 regeneration, with an "In brief" title derived from the original article title.
+
+### Anu connection configuration (2026-10-10)
+
+Assistant chat and article summaries share `/api/anu/blogs`; both forward through the same validated HTTPS origin and server integration key. No Gemini key or integration key is sent to a browser. Local development uses `.env.local` and the running local Anu service; local production builds read ignored `.env.production.local`, prepared with the deployed Anu connection. Vercel Production and Preview variables have the same deployed origin and matching integration secret. Restart a running local server after environment edits.
+
+Deploy the current Sabha source, including both `/api/anu/blogs` and `/api/anu/blogs-context`, together. Deployed Anu reads public blog context from `https://sabha.devvrats.in/api/anu/blogs-context`. Until this endpoint is deployed, Anu cannot retrieve the article content even if the shared secret is correct. Preview deployments use the same current public production blog collection, so preview-only articles are not visible to deployed Anu. Auth/database settings remain unchanged.

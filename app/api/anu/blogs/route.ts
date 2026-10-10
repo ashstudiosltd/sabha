@@ -1,10 +1,22 @@
 export const runtime = "nodejs";
 export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 const visits = new Map<string, { count: number; reset: number }>();
 const json = (body: object, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 export async function POST(request: Request) {
-  const base = process.env.ANU_API_URL || (process.env.NODE_ENV === "development" ? "http://127.0.0.1:5173" : "");
-  if (!base) return json({ error: "Anu is not connected yet." }, 503);
+  const production = process.env.NODE_ENV === "production";
+  const base = process.env.ANU_API_URL?.trim() || (production ? "https://anu.devvrats.in" : "http://127.0.0.1:5173");
+  const integrationSecret = process.env.ANU_INTEGRATION_SECRET;
+  let endpoint: URL;
+  try {
+    const origin = new URL(base);
+    const local = !production && ["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname);
+    if (origin.username || origin.password || origin.search || origin.hash || !["", "/"].includes(origin.pathname) || (origin.protocol !== "https:" && !(local && origin.protocol === "http:"))) throw new Error("Invalid Anu origin");
+    endpoint = new URL("/api/integrations/blogs/chat", origin);
+  } catch {
+    return json({ error: "Anu is temporarily unavailable. Please try again later." }, 503);
+  }
+  if (production && !integrationSecret) return json({ error: "Anu’s blog connection is being configured. Please try again later." }, 503);
   const now = Date.now();
   for (const [key, value] of visits) if (value.reset <= now) visits.delete(key);
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
@@ -19,12 +31,14 @@ export async function POST(request: Request) {
     try { body = JSON.parse(raw); } catch { return json({ error: "Please enter a message." }, 400); }
     if (!body || typeof body.message !== "string" || !body.message.trim() || body.message.length > 2000 || !Array.isArray(body.history) || body.history.length > 20 || body.history.some((item: { role?: unknown; text?: unknown } | null) => !item || !["user", "assistant"].includes(String(item.role)) || typeof item.text !== "string" || item.text.length > 4000)) return json({ error: "Please send a shorter message or start a fresh conversation." }, 400);
     if (body.articleId != null && (typeof body.articleId !== "string" || !/^[a-zA-Z0-9-]{1,80}$/.test(body.articleId))) return json({ error: "Invalid article." }, 400);
-    const upstream = await fetch(new URL("/api/integrations/blogs/chat", base), {
-      method: "POST", headers: { "Content-Type": "application/json", ...(process.env.ANU_INTEGRATION_SECRET ? { "x-anu-integration-key": process.env.ANU_INTEGRATION_SECRET } : {}) }, cache: "no-store",
+    const upstream = await fetch(endpoint, {
+      method: "POST", headers: { "Content-Type": "application/json", ...(integrationSecret ? { "x-anu-integration-key": integrationSecret } : {}) }, cache: "no-store",
       body: JSON.stringify({ message: body.message, history: body.history, articleId: body.articleId || null, intent: body.intent === "summary" ? "summary" : "chat" }), signal: AbortSignal.timeout(55_000),
     });
-    const data = await upstream.json();
-    if (!upstream.ok) return json({ error: data.error || "Anu couldn't reply. Please try again." }, upstream.status);
+    if (upstream.status === 401 || upstream.status === 403) return json({ error: "Anu’s blog connection is temporarily unavailable. Please try again later." }, 503);
+    const data = await upstream.json().catch(() => null);
+    if (!data || typeof data !== "object") return json({ error: "Anu couldn't connect just now. Please try again." }, 502);
+    if (!upstream.ok) return json({ error: typeof data.error === "string" ? data.error : "Anu couldn't reply. Please try again." }, upstream.status);
     if (typeof data.reply !== "string") return json({ error: "Anu couldn't reply. Please try again." }, 502);
     return json({ reply: data.reply, summaryTitle: typeof data.summaryTitle === "string" ? data.summaryTitle : undefined, sources: Array.isArray(data.sources) ? data.sources : [] });
   } catch { return json({ error: "Anu couldn't connect just now. Please try again." }, 502); }
