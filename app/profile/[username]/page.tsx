@@ -12,11 +12,12 @@ import {
 } from "lucide-react";
 
 import ProfileAction from "@/components/profile/ProfileAction";
-import BlogNavbar from "@/components/blogs/blognav"; // <- adjust to wherever the file lives
+import SabhaNavbar from "@/components/sabha/sabha-navbar";
 
 import { getPublicProfile } from "@/lib/supabase/profile";
 import { getBlogPosts } from "@/lib/supabase/blog";
 import Footer from "@/components/blogs/footer";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
 interface ProfilePageProps {
   params: Promise<{
@@ -24,7 +25,25 @@ interface ProfilePageProps {
   }>;
   searchParams: Promise<{
     q?: string | string[];
+    tab?: string | string[];
   }>;
+}
+
+interface FeedProfileActivity {
+  id: string;
+  activity_type: "post" | "reply";
+  post_id: string;
+  post_type: "conversation" | "project";
+  title: string | null;
+  body: string;
+  created_at: string;
+  resource_kind: string | null;
+  resource_url: string | null;
+  resource_label: string | null;
+  parent_title: string | null;
+  parent_body: string | null;
+  parent_author_name: string | null;
+  parent_author_username: string | null;
 }
 
 function formatJoinedDate(date: string): string {
@@ -81,9 +100,11 @@ export default async function ProfilePage({
   searchParams,
 }: ProfilePageProps) {
   const { username } = await params;
-  const { q } = await searchParams;
+  const { q, tab } = await searchParams;
 
   const query = (Array.isArray(q) ? q[0] : q)?.trim() ?? "";
+  const requestedTab = Array.isArray(tab) ? tab[0] : tab;
+  const activeTab = ["all", "replies", "comments", "watching"].includes(requestedTab ?? "") ? requestedTab! : "all";
 
   const profile = await getPublicProfile(username);
 
@@ -92,6 +113,18 @@ export default async function ProfilePage({
   }
 
   const allPosts = await getBlogPosts();
+
+  const supabase = await createServerClient();
+  const [feedActivityResult, commentsResult] = await Promise.all([
+    supabase.rpc("get_feed_profile_activity", { p_profile_id: profile.id }),
+    supabase.from("comments").select("id, post_id, content, created_at").eq("user_id", profile.id).order("created_at", { ascending: false }).limit(100),
+  ]);
+  const { data: clanMembershipCount } = await supabase.rpc("get_profile_public_clan_count", { p_profile_id: profile.id });
+  const feedActivity = (feedActivityResult.data ?? []) as FeedProfileActivity[];
+  if (feedActivityResult.error && !["42883", "PGRST202"].includes(feedActivityResult.error.code ?? "")) {
+    console.error("Unable to load Feed profile activity:", feedActivityResult.error.message);
+  }
+  if (commentsResult.error) console.error("Unable to load profile comments:", commentsResult.error.message);
 
   const authorPosts = allPosts.filter((post) => post.authorId === profile.id);
 
@@ -105,6 +138,16 @@ export default async function ProfilePage({
           post.tags.some((tag) => tag.toLowerCase().includes(needle))
       )
     : authorPosts;
+
+  const feedPosts = feedActivity.filter((item) => item.activity_type === "post" && (!needle || `${item.title ?? ""} ${item.body}`.toLowerCase().includes(needle)));
+  const feedReplies = feedActivity.filter((item) => item.activity_type === "reply" && (!needle || `${item.body} ${item.parent_title ?? ""} ${item.parent_body ?? ""}`.toLowerCase().includes(needle)));
+  const comments = (commentsResult.data ?? []).filter((comment) => {
+    if (!needle) return true;
+    const relatedPost = allPosts.find((post) => post.id === comment.post_id);
+    return `${comment.content} ${relatedPost?.title ?? ""}`.toLowerCase().includes(needle);
+  });
+  const totalPostsCount = profile.postsCount + feedPosts.length;
+  const activeCount = activeTab === "all" ? posts.length + feedPosts.length : activeTab === "replies" ? feedReplies.length : activeTab === "comments" ? comments.length : 0;
 
   const skills = profile.skills ? splitList(profile.skills) : [];
   const interests = profile.interests ? splitList(profile.interests) : [];
@@ -137,9 +180,9 @@ export default async function ProfilePage({
   const collapsible = rows.length > 2;
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif] text-[#1d1d1f]">
+    <main className="sabha-design min-h-screen text-[#1d1d1f]">
       {/* No function props here: server components can't pass them to client components. */}
-      <BlogNavbar
+      <SabhaNavbar
         initialQuery={query}
         placeholder={`Search ${profile.name}'s posts`}
       />
@@ -177,8 +220,13 @@ export default async function ProfilePage({
                 {profile.name}
               </h1>
 
-              <p className="mt-0.5 text-[15px] text-[#6e6e73]">
-                @{profile.username}
+              <p className="mt-0.5 flex flex-wrap items-center gap-2 text-[15px] text-[#6e6e73]">
+                <span>@{profile.username}</span>
+                {Number(clanMembershipCount ?? 0) > 0 && (
+                  <Link href="/feed?view=clans" className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e5ea] bg-[#f5f5f7] px-2.5 py-1 text-[11px] font-medium text-[#424245] transition-colors hover:bg-[#e8e8ed]" aria-label={`${clanMembershipCount} public Clan memberships`}>
+                    <Users className="h-3.5 w-3.5 text-[#0071e3]" /> Clan member
+                  </Link>
+                )}
               </p>
 
               {/* Stat pills */}
@@ -191,8 +239,8 @@ export default async function ProfilePage({
                     className="h-[18px] w-[18px] text-[#0071e3]"
                     strokeWidth={2}
                   />
-                  {profile.postsCount}{" "}
-                  {profile.postsCount === 1 ? "Post" : "Posts"}
+                  {totalPostsCount}{" "}
+                  {totalPostsCount === 1 ? "Post" : "Posts"}
                 </Link>
 
                 <Link
@@ -322,21 +370,10 @@ export default async function ProfilePage({
         {/* ───────── Tabs ───────── */}
         <div className="mt-10 flex items-center justify-between gap-3">
           <div className="flex items-center gap-1 overflow-x-auto sm:gap-2">
-            <span
-              aria-current="page"
-              className="shrink-0 rounded-[10px] bg-[#e8e8ed] px-3.5 py-2.5 text-[15px] font-semibold text-[#1d1d1f] sm:px-4 sm:text-[16px]"
-            >
-              All Posts
-            </span>
-
-            {["Replies", "Comments", "Watching"].map((label) => (
-              <span
-                key={label}
-                aria-disabled="true"
-                className="shrink-0 cursor-default px-3 py-2.5 text-[15px] font-medium text-[#6e6e73] sm:px-4 sm:text-[16px]"
-              >
-                {label}
-              </span>
+            {[{ id: "all", label: "All Posts" }, { id: "replies", label: "Replies" }, { id: "comments", label: "Comments" }, { id: "watching", label: "Watching" }].map((item) => (
+              <Link key={item.id} href={`/profile/${profile.username}?tab=${item.id}${query ? `&q=${encodeURIComponent(query)}` : ""}`} aria-current={activeTab === item.id ? "page" : undefined} className={`shrink-0 rounded-[10px] px-3.5 py-2.5 text-[15px] font-medium sm:px-4 sm:text-[16px] ${activeTab === item.id ? "bg-[#e8e8ed] font-semibold text-[#1d1d1f]" : "text-[#6e6e73] hover:bg-[#f5f5f7]"}`}>
+                {item.label}{item.id === "replies" && feedReplies.length ? ` ${feedReplies.length}` : ""}
+              </Link>
             ))}
           </div>
 
@@ -349,10 +386,10 @@ export default async function ProfilePage({
         {/* Search summary */}
         {query && (
           <p className="mt-4 text-[14px] text-[#6e6e73]">
-            {posts.length} {posts.length === 1 ? "result" : "results"} for
+            {activeCount} {activeCount === 1 ? "result" : "results"} for
             &ldquo;{query}&rdquo; ·{" "}
             <Link
-              href={`/profile/${profile.username}`}
+              href={`/profile/${profile.username}?tab=${activeTab}`}
               className="text-[#0066cc] hover:underline"
             >
               Clear search
@@ -360,17 +397,55 @@ export default async function ProfilePage({
           </p>
         )}
 
-        {/* ───────── Posts table ───────── */}
-        <section className="mt-5 overflow-hidden rounded-[18px] bg-white">
+        {activeTab === "all" && feedPosts.length > 0 && (
+          <section className="mt-5 grid gap-3" aria-label="Feed posts">
+            {feedPosts.map((item) => (
+              <article key={item.id} className="rounded-[18px] bg-white p-5 sm:p-6">
+                <p className="text-[12px] font-medium uppercase tracking-[.08em] text-[#6e6e73]">{item.post_type === "project" ? "Project update" : "Conversation"} · Feed</p>
+                {item.title && <h2 className="mt-2 text-[19px] font-semibold text-[#1d1d1f]">{item.title}</h2>}
+                <p className="mt-2 whitespace-pre-wrap text-[14px] leading-relaxed text-[#424245]">{item.body}</p>
+                {item.resource_url && <a className="mt-3 inline-block text-[13px] text-[#0066cc] hover:underline" href={item.resource_url} target={item.resource_url.startsWith("/") ? undefined : "_blank"} rel={item.resource_url.startsWith("/") ? undefined : "noreferrer"}>{item.resource_label ?? item.resource_url}</a>}
+                <Link href={`/feed/${item.post_id}`} className="mt-4 inline-block text-[13px] font-medium text-[#0066cc] hover:underline">Open conversation</Link>
+              </article>
+            ))}
+          </section>
+        )}
+
+        {activeTab === "replies" && (
+          <section className="mt-5 grid gap-3" aria-label="Feed replies">
+            {feedReplies.length ? feedReplies.map((item) => (
+              <article key={item.id} className="rounded-[18px] bg-white p-5 sm:p-6">
+                <p className="text-[12px] text-[#6e6e73]">Replying to <strong className="font-medium text-[#1d1d1f]">{item.parent_author_name ?? "a community member"}</strong>{item.parent_title ? ` · ${item.parent_title}` : " on Feed"}</p>
+                <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-[#1d1d1f]">{item.body}</p>
+                <p className="mt-3 line-clamp-2 border-l-2 border-[#d7d7dc] pl-3 text-[13px] leading-relaxed text-[#6e6e73]">{item.parent_body}</p>
+                <Link href={`/feed/${item.post_id}`} className="mt-4 inline-block text-[13px] font-medium text-[#0066cc] hover:underline">View conversation</Link>
+              </article>
+            )) : <div className="rounded-[18px] bg-white px-6 py-16 text-center"><p className="text-[20px] font-semibold text-[#1d1d1f]">No replies yet</p><p className="mt-2 text-[15px] text-[#6e6e73]">Replies this member shares in Feed will appear here.</p></div>}
+          </section>
+        )}
+
+        {activeTab === "comments" && (
+          <section className="mt-5 grid gap-3" aria-label="Blog comments">
+            {comments.length ? comments.map((comment) => {
+              const relatedPost = allPosts.find((post) => post.id === comment.post_id);
+              return <article key={comment.id} className="rounded-[18px] bg-white p-5 sm:p-6"><p className="whitespace-pre-wrap text-[15px] leading-relaxed text-[#1d1d1f]">{comment.content}</p><Link href={`/blogs/${comment.post_id}`} className="mt-3 inline-block text-[13px] font-medium text-[#0066cc] hover:underline">Commented on {relatedPost?.title ?? "a Sabha blog"}</Link></article>;
+            }) : <div className="rounded-[18px] bg-white px-6 py-16 text-center"><p className="text-[20px] font-semibold text-[#1d1d1f]">No comments yet</p><p className="mt-2 text-[15px] text-[#6e6e73]">Comments this member leaves on Sabha blogs will appear here.</p></div>}
+          </section>
+        )}
+
+        {activeTab === "watching" && <div className="mt-5 rounded-[18px] bg-white px-6 py-16 text-center"><p className="text-[20px] font-semibold text-[#1d1d1f]">Watching is coming later</p><p className="mt-2 text-[15px] text-[#6e6e73]">This profile doesn’t have a public watching list yet.</p></div>}
+
+        {/* ───────── Blog posts table ───────── */}
+        {activeTab === "all" && <section className="mt-5 overflow-hidden rounded-[18px] bg-white">
           {posts.length === 0 ? (
             <div className="px-6 py-16 text-center">
               <p className="text-[20px] font-semibold text-[#1d1d1f]">
-                {query ? "No matching posts" : "No posts yet"}
+                {query ? "No matching blog posts" : "No blogs yet"}
               </p>
               <p className="mt-2 text-[15px] text-[#6e6e73]">
                 {query
                   ? "Try a different topic, keyword, or tag."
-                  : "This profile hasn\u2019t published anything yet."}
+                  : "This profile hasn\u2019t published a blog yet."}
               </p>
             </div>
           ) : (
@@ -449,7 +524,7 @@ export default async function ProfilePage({
               </ul>
             </>
           )}
-        </section>
+        </section>}
       </div>
 
       <Footer />

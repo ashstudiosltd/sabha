@@ -82,7 +82,7 @@ function BlogsPageContent() {
   }, [posts, activeCategory, query]);
 
   return (
-    <div className="text-[#1d1d1f]">
+    <div className="sabha-design text-[#1d1d1f]">
       <div className="mx-auto max-w-[1180px] px-5 pb-8 pt-6 sm:px-8 sm:pb-10 sm:pt-8 lg:px-10 lg:pt-10">
         <h1 className="mb-6 text-[40px] font-semibold leading-[1.05] tracking-[-0.03em] text-[#1d1d1f] sm:mb-8 sm:text-[56px]">
           Recents.

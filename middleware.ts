@@ -79,6 +79,9 @@ export async function middleware(
   const pathname =
     request.nextUrl.pathname;
 
+  const isSharedFeedPost =
+    /^\/feed\/[0-9a-f-]{36}(?:\/opengraph-image)?$/i.test(pathname);
+
   /*
    * Public routes.
    *
@@ -86,6 +89,7 @@ export async function middleware(
    */
   const isPublicRoute =
   pathname === "/" ||
+  isSharedFeedPost ||
   pathname.startsWith("/blogs") ||
   pathname.startsWith("/profile") ||
   pathname.startsWith("/auth") ||

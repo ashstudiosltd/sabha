@@ -10,11 +10,16 @@ export type Notification = {
     | "clan_join_accepted"
     | "post_like"
     | "post_comment"
+    | "new_blog_post"
+    | "new_feed_post"
+    | "feed_reply"
+    | "feed_comment"
     | "follow";
   title: string;
   message: string | null;
   entity_id: string | null;
   entity_type: string | null;
+  target_path: string;
   read_at: string | null;
   created_at: string;
   actor: {
@@ -42,6 +47,7 @@ export async function getNotifications(
       message,
       entity_id,
       entity_type,
+      target_path,
       read_at,
       created_at,
       actor:profiles!notifications_actor_id_fkey (
@@ -75,6 +81,7 @@ export async function getNotifications(
     message: notification.message,
     entity_id: notification.entity_id,
     entity_type: notification.entity_type,
+    target_path: notification.target_path,
     read_at: notification.read_at,
     created_at: notification.created_at,
     actor: Array.isArray(notification.actor)

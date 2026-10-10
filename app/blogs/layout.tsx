@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import { Roboto as RobotoFont } from "next/font/google";
-import BlogNavbar from "@/components/blogs/blognav";
-
-const Roboto = RobotoFont({
-  weight: "400",
-  subsets: ["latin"],
-});
+import SabhaNavbar from "@/components/sabha/sabha-navbar";
 
 export const metadata: Metadata = {
   title: "Blogs",
@@ -16,9 +10,9 @@ export default function BlogsLayout({
 }: LayoutProps<"/">) {
   return (
     <main
-      className={`relative z-10 min-h-screen bg-[#F5F6F7] ${Roboto.className}`}
+      className="sabha-design relative z-10"
     >
-      <BlogNavbar searchPath="/blogs" />
+      <SabhaNavbar section="blogs" searchPath="/blogs" />
       {children}
     </main>
   );

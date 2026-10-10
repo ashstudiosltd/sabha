@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./sabha/design-system.css";
 
 :root {
   --background: #ffffff;

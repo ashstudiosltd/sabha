@@ -1,0 +1,19 @@
+.page { width: min(100% - 40px, 820px); margin-inline: auto; padding: 36px 0 88px; }
+.post { overflow: hidden; padding: clamp(20px, 5vw, 44px); }
+.author { display: flex; min-width: 0; align-items: center; gap: 12px; }
+.avatar, .avatarFallback { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border-radius: 50%; object-fit: cover; }
+.avatarFallback { background: #e8edf5; color: #344965; font-size: 12px; font-weight: 650; }
+.authorText { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.authorText strong { overflow: hidden; color: var(--sabha-text); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.authorText small { color: var(--sabha-text-muted); font-size: 12px; }
+.postType { margin-left: auto; border-radius: 999px; background: var(--sabha-surface-muted); padding: 7px 10px; color: var(--sabha-text-muted); font-size: 11px; white-space: nowrap; }
+.post h1 { margin: 32px 0 0; color: var(--sabha-text); font-size: clamp(28px, 5vw, 42px); font-weight: 650; line-height: 1.15; letter-spacing: -.04em; overflow-wrap: anywhere; }
+.body { margin: 18px 0 0; color: #3f4146; font-size: 16px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.reference { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 24px; border: 1px solid var(--sabha-border); border-radius: 13px; background: #fafbfc; padding: 14px 16px; color: var(--sabha-text); text-decoration: none; }
+.reference span:first-child { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.reference small { color: var(--sabha-text-subtle); font-size: 11px; text-transform: capitalize; }
+.reference strong { overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.reference:hover { border-color: #c6d9ee; background: #f5f9fe; }
+.footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; border-top: 1px solid var(--sabha-border); padding-top: 20px; }
+.footer > span { color: var(--sabha-text-subtle); font-size: 12px; }
+@media (max-width: 540px) { .page { width: calc(100% - 28px); padding-top: 20px; } .author { align-items: flex-start; } .postType { padding: 6px 8px; font-size: 10px; } .footer { align-items: flex-start; flex-direction: column; } }

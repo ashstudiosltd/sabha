@@ -6,8 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { CircleUser, Search, X } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import NotificationCenter from "@/components/sabha/notification-center";
 
-interface BlogNavbarProps {
+interface SabhaNavbarProps {
   /**
    * Controlled mode (e.g. the /blogs client page): pass BOTH `query` and
    * `onQueryChange`.
@@ -27,7 +28,24 @@ interface BlogNavbarProps {
    * Omit to filter the current page.
    */
   searchPath?: string;
+  /** The active Sabha area. Defaults to the current route. */
+  section?: "blogs" | "feed" | "projects";
+  feedView?: "conversation" | "project" | "clans";
+  /** Contextual action for areas that provide one. */
+  action?: { label: string; href: string };
 }
+
+const sectionTitles = {
+  blogs: "Blogs",
+  feed: "Feed",
+  projects: "Projects",
+} as const;
+
+const sectionLinks = [
+  { id: "blogs", label: "Blogs", href: "/blogs" },
+  { id: "feed", label: "Feed", href: "/feed" },
+  { id: "projects", label: "Projects", href: "/sabha/projects" },
+] as const;
 
 interface CurrentProfile {
   id: string;
@@ -36,15 +54,32 @@ interface CurrentProfile {
   avatarUrl: string | null;
 }
 
-export default function BlogNavbar({
+export default function SabhaNavbar({
   query,
   onQueryChange,
   initialQuery = "",
-  placeholder = "Search for a topic, subtopic, or tag",
+  placeholder,
   searchPath,
-}: BlogNavbarProps) {
+  section: requestedSection,
+  feedView = "conversation",
+  action,
+}: SabhaNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const section = requestedSection ?? (
+    pathname.startsWith("/sabha/projects") || pathname.startsWith("/projects")
+      ? "projects"
+      : pathname.startsWith("/feed") || pathname.startsWith("/sabha/feed")
+        ? "feed"
+        : "blogs"
+  );
+  const sectionTitle = sectionTitles[section];
+  const sectionHref = section === "blogs" ? "/blogs" : section === "feed" ? "/feed" : "/sabha/projects";
+  const searchPlaceholder = placeholder ?? {
+    blogs: "Search for a topic, subtopic, or tag",
+    feed: "Search the community feed",
+    projects: "Search community projects",
+  }[section];
   const [supabase] = useState(() => createClient());
 
   const [profile, setProfile] = useState<CurrentProfile | null>(null);
@@ -69,10 +104,12 @@ export default function BlogNavbar({
   /* URL mode: restore the input from ?q= after a reload / direct visit */
   useEffect(() => {
     if (isControlled) return;
-    const q = new URLSearchParams(window.location.search).get("q");
-    if (q) setLocalQuery(q);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const frame = requestAnimationFrame(() => {
+      const q = new URLSearchParams(window.location.search).get("q");
+      if (q) setLocalQuery(q);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isControlled]);
 
   useEffect(() => {
     if (isControlled) return;
@@ -184,15 +221,22 @@ export default function BlogNavbar({
     router.refresh();
   };
 
-  const font =
-    "font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif]";
-  const container = "mx-auto w-full max-w-[980px] px-5";
-  const linkClass =
-    "text-[14px] text-[#1d1d1f] transition-colors hover:text-[#0066cc]";
-  const itemClass =
-    "block w-full px-4 py-2.5 text-left text-[14px] text-[#1d1d1f] hover:bg-[#f5f5f7]";
-  const inputClass =
-    "h-full w-full rounded-[10px] border border-[#d2d2d7] bg-white pl-10 pr-4 text-[16px] text-[#1d1d1f] outline-none transition-colors placeholder:text-[#86868b] focus:border-[#0071e3] sm:text-[15px]";
+  const itemClass = "sabha-nav-menu-item";
+  const inputClass = "sabha-field";
+  const primaryAction = action ?? (section === "blogs"
+    ? { label: "Post", href: "/blogs/new" }
+    : section === "feed"
+      ? feedView === "clans"
+        ? { label: "Create Clan", href: "/feed/clans/new" }
+        : { label: "Post", href: feedView === "project" ? "/feed/new?type=project" : "/feed/new?type=conversation" }
+      : undefined);
+  const changeFeedView = (view: "conversation" | "project" | "clans") => {
+    const params = new URLSearchParams(window.location.search);
+    if (value.trim()) params.set("q", value.trim());
+    else params.delete("q");
+    params.set("view", view);
+    router.push(`/feed?${params.toString()}`, { scroll: false });
+  };
 
   /*
     Returned as a fragment on purpose: the gray brand bar scrolls away with
@@ -202,20 +246,20 @@ export default function BlogNavbar({
   return (
     <>
       {/* ───── Top brand bar (scrolls away) ───── */}
-      <div className={`h-[44px] bg-[#f2f2f2] ${font}`}>
-        <div className={`${container} flex h-full items-center`}>
+      <div className="sabha-brand-strip">
+        <div className="sabha-brand-strip-inner">
           <Link
-            href="/blogs"
+            href="/"
             aria-label="Sabha"
-            className="flex items-center gap-1.5 text-[#1d1d1f]"
+            className="sabha-nav-brand"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logot.png"
               alt=""
-              className="h-[22px] w-auto object-contain"
+              className=""
             />
-            <span className="text-[21px] font-medium leading-none tracking-[-0.02em]">
+            <span className="sabha-nav-brand-name">
               Sabha. 
             </span>
           </Link>
@@ -224,39 +268,53 @@ export default function BlogNavbar({
 
       {/* ───── Main bar (stays fixed at the top on scroll) ───── */}
       <div
-        className={`sticky top-0 z-40 border-b border-[#d2d2d7] bg-white ${font}`}
+        className="sabha-nav"
       >
-        <div className={`${container} flex h-[58px] items-center gap-4 sm:gap-6`}>
+        <div className="sabha-nav-inner">
           {/* Title */}
           <Link
-            href="/blogs"
-            className="shrink-0 text-[24px] font-semibold leading-none tracking-[-0.02em] text-[#1d1d1f]"
+            href={sectionHref}
+            className="sabha-nav-section"
           >
-            Blogs. 
+            {sectionTitle}.
           </Link>
 
           {/* Search (sm and up) */}
-          <div className="relative ml-2 hidden h-[36px] w-full max-w-[460px] items-center sm:ml-8 sm:flex lg:ml-14">
+          <div className="sabha-nav-search">
             <Search className="pointer-events-none absolute left-3 h-[16px] w-[16px] text-[#6e6e73]" />
             <input
               type="text"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={placeholder}
-              aria-label="Search blogs"
+              placeholder={searchPlaceholder}
+              aria-label={`Search ${section}`}
               className={inputClass}
             />
           </div>
 
+          {section === "feed" && pathname === "/feed" && (
+            <div className="sabha-feed-mode" role="group" aria-label="Feed post type">
+              <button type="button" onClick={() => changeFeedView("conversation")} aria-pressed={feedView === "conversation"}>
+                Conversations
+              </button>
+              <button type="button" onClick={() => changeFeedView("project")} aria-pressed={feedView === "project"}>
+                Project
+              </button>
+              <button type="button" onClick={() => changeFeedView("clans")} aria-pressed={feedView === "clans"}>
+                Clans
+              </button>
+            </div>
+          )}
+
           {/* Links */}
-          <div className="ml-auto flex items-center gap-5 sm:gap-6">
+          <div className="sabha-nav-links">
             {/* Search toggle (below sm) */}
             <button
               type="button"
               onClick={() => setSearchOpen((v) => !v)}
               aria-label={searchOpen ? "Close search" : "Open search"}
               aria-expanded={searchOpen}
-              className="text-[#1d1d1f] sm:hidden"
+              className="sabha-nav-mobile-search"
             >
               {searchOpen ? (
                 <X className="h-[20px] w-[20px]" />
@@ -266,33 +324,40 @@ export default function BlogNavbar({
             </button>
 
             {/* Desktop links */}
-            <Link href="/blogs" className={`hidden md:block ${linkClass}`}>
-              Blogs. 
-            </Link>
-            <Link
-              href="/blogs?sort=recent"
-              className={`hidden md:block ${linkClass}`}
-            >
-              Recent posts
-            </Link>
+            {sectionLinks.filter((item) => item.id !== section).map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="sabha-nav-link"
+                aria-current={section === item.id ? "page" : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
+            {section === "blogs" && (
+              <Link href="/blogs?sort=recent" className="sabha-nav-link">
+                Recent posts
+              </Link>
+            )}
 
             {/* Post -> its own page */}
-            <Link
-              href="/blogs/new"
-              className="flex h-[28px] items-center rounded-[6px] bg-[#1d1d1f] px-3.5 text-[14px] font-medium text-white transition-all hover:bg-black active:scale-95"
-            >
-              Post
-            </Link>
+            {primaryAction && (
+              <Link href={primaryAction.href} className="sabha-button sabha-button-primary sabha-nav-primary">
+                {primaryAction.label}
+              </Link>
+            )}
+
+            {profile && <NotificationCenter userId={profile.id} />}
 
             {/* Profile / Account menu (works both logged in and logged out) */}
-            <div ref={menuRef} className="relative">
+            <div ref={menuRef} className="sabha-nav-account">
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
                 aria-label={profile ? "Account menu" : "Sign in menu"}
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
-                className="flex h-[30px] w-[30px] items-center justify-center overflow-hidden rounded-full text-[#2f80ed] transition-opacity hover:opacity-80"
+                className="flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full text-[#2f80ed] transition-opacity hover:opacity-80"
               >
                 {profile?.avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -313,34 +378,27 @@ export default function BlogNavbar({
               {menuOpen && (
                 <div
                   role="menu"
-                  className="absolute right-0 top-full mt-2 w-[230px] overflow-hidden rounded-[12px] border border-[#d2d2d7] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                  className="sabha-nav-menu"
                 >
                   {profile && (
-                    <div className="border-b border-[#e8e8ed] px-4 py-3">
+                  <div className="border-b border-[var(--sabha-border)] px-4 py-3">
                       <p className="truncate text-[15px] font-semibold text-[#1d1d1f]">
                         {profile.username}
                       </p>
                     </div>
                   )}
 
-                  {/* Blogs / Recent posts shown here on small screens, both states */}
-                  <div className="border-b border-[#e8e8ed] py-1 md:hidden">
-                    <Link
-                      role="menuitem"
-                      href="/blogs"
-                      onClick={() => setMenuOpen(false)}
-                      className={itemClass}
-                    >
-                      Blogs
-                    </Link>
-                    <Link
-                      role="menuitem"
-                      href="/blogs?sort=recent"
-                      onClick={() => setMenuOpen(false)}
-                      className={itemClass}
-                    >
-                      Recent posts
-                    </Link>
+                  <div className="border-b border-[var(--sabha-border)] py-1 md:hidden">
+                    {sectionLinks.filter((item) => item.id !== section).map((item) => (
+                      <Link key={item.id} role="menuitem" href={item.href} onClick={() => setMenuOpen(false)} className={itemClass}>
+                        {item.label}
+                      </Link>
+                    ))}
+                    {section === "blogs" && (
+                      <Link role="menuitem" href="/blogs?sort=recent" onClick={() => setMenuOpen(false)} className={itemClass}>
+                        Recent posts
+                      </Link>
+                    )}
                   </div>
 
                   {profile ? (
@@ -363,7 +421,7 @@ export default function BlogNavbar({
                           Edit Profile
                         </Link>
                       </div>
-                      <div className="border-t border-[#e8e8ed] py-1">
+                      <div className="border-t border-[var(--sabha-border)] py-1">
                         <button
                           type="button"
                           role="menuitem"
@@ -394,16 +452,16 @@ export default function BlogNavbar({
 
         {/* Search row (below sm, only when toggled) */}
         {searchOpen && (
-          <div className="border-t border-[#e8e8ed] px-5 py-3 sm:hidden">
-            <div className="relative flex h-[40px] items-center">
+          <div className="sabha-nav-mobile-search-row">
+            <div className="sabha-nav-search">
               <Search className="pointer-events-none absolute left-3 h-[16px] w-[16px] text-[#6e6e73]" />
               <input
                 ref={searchRef}
                 type="text"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
-                placeholder={placeholder}
-                aria-label="Search blogs"
+                placeholder={searchPlaceholder}
+                aria-label={`Search ${section}`}
                 className={inputClass}
               />
             </div>

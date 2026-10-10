@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type { BlogPost } from "@/data/blog";
 import ShareSheet from "@/components/ShareSheet";
+import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { ShareIcon } from "../../app/blogs/icons";
 
 interface BlogCardProps {
@@ -34,23 +35,7 @@ export default function BlogCard({
       >
         {/* Author */}
         <div className="flex items-center gap-3">
-          {post.author.avatarUrl ? (
-            <img
-              src={post.author.avatarUrl}
-              alt={post.author.name}
-              className="h-9 w-9 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[11px] font-medium text-white"
-              style={{
-                backgroundColor:
-                  post.author.avatarColor,
-              }}
-            >
-              {post.author.avatarInitials}
-            </div>
-          )}
+          <ProfileAvatar name={post.author.name} avatarUrl={post.author.avatarUrl} size="medium" />
 
           <div className="min-w-0">
             <p className="truncate text-[14px] font-medium text-[#1d1d1f]">

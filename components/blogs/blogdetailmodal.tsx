@@ -32,6 +32,7 @@ import {
 } from "@/app/blogs/icons";
 
 import ProfileQuickCard from "@/components/profile/ProfileQuickCard";
+import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import ShareSheet from "@/components/ShareSheet";
 
 /*
@@ -162,39 +163,42 @@ export default function BlogDetailModal({
 
   useEffect(() => {
     if (!post) {
-      setVisible(false);
+      const closeFrame = requestAnimationFrame(() => {
+        setVisible(false);
+        setConfirmDelete(false);
+        setDeleting(false);
+        setProfileOpen(false);
+        setShareOpen(false);
+        setLikeCount(0);
+        setLiked(false);
+        setLikeError(null);
+        setComments([]);
+        setCommentText("");
+        setCommentError(null);
+      });
+      return () => cancelAnimationFrame(closeFrame);
+    }
+
+    let enterFrame = 0;
+    const resetFrame = requestAnimationFrame(() => {
       setConfirmDelete(false);
       setDeleting(false);
       setProfileOpen(false);
       setShareOpen(false);
-
       setLikeCount(0);
       setLiked(false);
       setLikeError(null);
-
       setComments([]);
       setCommentText("");
       setCommentError(null);
+      setVisible(false);
+      enterFrame = requestAnimationFrame(() => setVisible(true));
+    });
 
-      return;
-    }
-
-    setConfirmDelete(false);
-    setDeleting(false);
-    setProfileOpen(false);
-    setShareOpen(false);
-
-    setLikeError(null);
-
-    setComments([]);
-    setCommentText("");
-    setCommentError(null);
-
-    const raf = requestAnimationFrame(() =>
-      setVisible(true)
-    );
-
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(resetFrame);
+      if (enterFrame) cancelAnimationFrame(enterFrame);
+    };
   }, [post]);
 
   /* ---------------- LOAD LIKE STATE ---------------- */
@@ -574,26 +578,9 @@ export default function BlogDetailModal({
                     );
                   }}
                   aria-label={`Open ${post.author.name}'s profile`}
-                  className="h-9 w-9 shrink-0 overflow-hidden rounded-full transition-transform duration-150 active:scale-90"
+                  className="shrink-0 rounded-full transition-transform duration-150 active:scale-90"
                 >
-                  {post.author.avatarUrl ? (
-                    <img
-                      src={post.author.avatarUrl}
-                      alt={post.author.name}
-                      className="h-full w-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div
-                      className="flex h-full w-full items-center justify-center text-[11px] font-medium tracking-wide text-white"
-                      style={{
-                        backgroundColor:
-                          post.author.avatarColor,
-                      }}
-                    >
-                      {post.author.avatarInitials}
-                    </div>
-                  )}
+                  <ProfileAvatar name={post.author.name} avatarUrl={post.author.avatarUrl} size="medium" />
                 </button>
 
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 text-[14px]">
