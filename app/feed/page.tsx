@@ -9,13 +9,15 @@ import styles from "./feed.module.css";
 export const dynamic = "force-dynamic";
 
 interface FeedPageProps {
-  searchParams: Promise<{ view?: string | string[]; q?: string | string[] }>;
+  searchParams: Promise<{ view?: string | string[]; q?: string | string[]; post?: string | string[] }>;
 }
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
   const params = await searchParams;
   const requestedView = Array.isArray(params.view) ? params.view[0] : params.view;
   const view = requestedView === "clans" ? "clans" : requestedView === "project" || requestedView === "project-up" ? "project" : "conversation";
+  const requestedPost = Array.isArray(params.post) ? params.post[0] : params.post;
+  const pinnedPostId = requestedPost && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestedPost) ? requestedPost : null;
   const query = (Array.isArray(params.q) ? params.q[0] : params.q)?.trim().toLowerCase() ?? "";
   const supabase = await createClient();
   const {
@@ -25,11 +27,12 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   if (!user) redirect("/auth?next=%2Ffeed");
 
   if (view === "clans") {
-    const [profileResult, clansResult, privateClansResult, membershipsResult] = await Promise.all([
+    const [profileResult, clansResult, privateClansResult, membershipsResult, archivesResult] = await Promise.all([
       supabase.from("profiles").select("id, name, username, avatar_url").eq("id", user.id).maybeSingle(),
       supabase.rpc("get_public_clan_summaries"),
       supabase.rpc("get_my_private_clan_summaries"),
       supabase.from("clan_members").select("clan_id").eq("user_id", user.id),
+      supabase.from("clans").select("id").not("archived_at", "is", null),
     ]);
     const currentProfile = profileResult.data
       ? {
@@ -46,17 +49,14 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         };
     const allClans = [...(clansResult.data ?? []), ...(privateClansResult.data ?? [])] as ClanSummary[];
     const hasAnyClans = allClans.length > 0;
-    const needle = query.toLowerCase();
-    const clans = allClans.filter((clan) =>
-      !needle || `${clan.name} ${clan.description}`.toLowerCase().includes(needle)
-    );
     const setupRequired = !!clansResult.error || !!privateClansResult.error || !!membershipsResult.error;
 
     return (
       <main className="sabha-design min-h-screen">
         <SabhaNavbar section="feed" feedView="clans" showClanCreateAction={hasAnyClans} initialQuery={query} />
         <ClanDirectory
-          clans={clans}
+          clans={allClans}
+          archivedClanIds={(archivesResult.data ?? []).map((clan) => clan.id)}
           hasAnyClans={hasAnyClans}
           memberClanIds={(membershipsResult.data ?? []).map((membership) => membership.clan_id)}
           currentUserId={currentProfile.id}
@@ -83,8 +83,13 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       .limit(50),
   ]);
 
-  const authorIds = [...new Set((postsResult.data ?? []).map((post) => post.author_id))];
-  const postIds = (postsResult.data ?? []).map((post) => post.id);
+  const recentPosts = postsResult.data ?? [];
+  const { data: pinnedPost } = pinnedPostId && !recentPosts.some((post) => post.id === pinnedPostId)
+    ? await supabase.from("feed_posts").select("id, author_id, clan_id, post_type, title, body, resource_kind, resource_url, resource_label, created_at").eq("id", pinnedPostId).is("clan_id", null).eq("post_type", view).maybeSingle()
+    : { data: null };
+  const loadedPosts = pinnedPost ? [pinnedPost, ...recentPosts] : recentPosts;
+  const authorIds = [...new Set(loadedPosts.map((post) => post.author_id))];
+  const postIds = loadedPosts.map((post) => post.id);
   const repliesResult = postIds.length
     ? await supabase
         .from("feed_replies")
@@ -120,7 +125,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     };
   };
 
-  const posts = (postsResult.data ?? []).map((post) => {
+  const posts = loadedPosts.map((post) => {
     return {
       ...post,
       author: getAuthor(post.author_id),
@@ -131,7 +136,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         .filter((comment) => comment.post_id === post.id)
         .map((comment) => ({ ...comment, author: getAuthor(comment.author_id) })),
     };
-  }).filter((post) => !query || [post.title, post.body, post.author.name, post.author.username].some((value) => value?.toLowerCase().includes(query)));
+  }).filter((post) => post.id === pinnedPostId || !query || [post.title, post.body, post.author.name, post.author.username].some((value) => value?.toLowerCase().includes(query)));
 
   const currentProfile = profileResult.data
     ? {
@@ -154,7 +159,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       <SabhaNavbar section="feed" feedView={view} initialQuery={query} />
       <div className={styles.page}>
         <FeedExperience
-          key={view}
+          key={`${view}:${query}:${pinnedPostId ?? "recent"}:${pinnedPostId ? `${repliesResult.data?.at(-1)?.id ?? ""}:${commentsResult.data?.at(-1)?.id ?? ""}` : ""}`}
           currentProfile={currentProfile}
           activeView={view}
           initialPosts={posts}

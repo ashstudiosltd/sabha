@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { CircleUser, Search, X } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import BackNavigation from "@/components/sabha/back-navigation";
 import NotificationCenter from "@/components/sabha/notification-center";
 
 interface SabhaNavbarProps {
@@ -257,6 +258,7 @@ export default function SabhaNavbar({
               Sabha. 
             </span>
           </Link>
+          <BackNavigation />
         </div>
       </div>
 

@@ -1,11 +1,30 @@
 .layout { display: grid; grid-template-columns: minmax(0, 1fr) 250px; align-items: start; gap: 28px; }
 .main { min-width: 0; }
+.clanIntroLayout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 310px); align-items: center; gap: 36px; margin: 34px 0 32px; }
+.clanIntro { min-width: 0; }
+.clanIntro > p:first-child { margin: 0; }
+.clanIntro h1 { max-width: 680px; }
+.myClans { min-width: 0; border: 1px solid var(--sabha-border); border-radius: 18px; padding: 17px; }
+.myClansHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.myClansHeading > div > span { color: var(--sabha-text-subtle); font-size: 9px; font-weight: 650; letter-spacing: .13em; text-transform: uppercase; }
+.myClansHeading h2 { margin: 4px 0 0; color: var(--sabha-text); font-size: 18px; font-weight: 650; letter-spacing: -.025em; }
+.myClanCount { display: grid; min-width: 28px; height: 28px; place-items: center; border: 1px solid var(--sabha-border); border-radius: 50%; color: var(--sabha-text-muted); font-size: 11px; font-weight: 600; }
+.myClanList { display: grid; max-height: 260px; gap: 3px; overflow: auto; margin: 14px -5px 0; padding: 0 5px; list-style: none; }
+.myClanLink { display: flex; min-width: 0; align-items: center; gap: 9px; border-radius: 11px; padding: 7px; color: inherit; text-decoration: none; transition: background 140ms ease; }
+.myClanLink:hover { background: var(--sabha-surface-muted); }
+.myClanLink > svg { flex: 0 0 auto; color: var(--sabha-text-subtle); }
+.myClanMark { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; overflow: hidden; border: 1px solid var(--sabha-border); border-radius: 11px; background: #f5f8fc; color: var(--sabha-accent); font-size: 14px; font-weight: 650; }
+.myClanMark img { width: 100%; height: 100%; object-fit: cover; }
+.myClanText { display: grid; min-width: 0; flex: 1; gap: 3px; }
+.myClanText strong { overflow: hidden; color: var(--sabha-text); font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.myClanText small { color: var(--sabha-text-subtle); font-size: 10px; text-transform: capitalize; }
+.myClansEmpty { display: grid; justify-items: start; gap: 10px; padding: 14px 1px 2px; }
+.myClansEmpty p { margin: 0; color: var(--sabha-text-muted); font-size: 12px; line-height: 1.6; }
 .clanGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
 .clanCard { display: flex; min-height: 250px; flex-direction: column; padding: 22px; }
 .clanCardTop { display: flex; align-items: center; justify-content: space-between; }
 .clanMark { display: grid; width: 44px; height: 44px; place-items: center; overflow: hidden; border: 1px solid var(--sabha-border); border-radius: 14px; background: #f5f8fc; color: var(--sabha-accent); font-size: 18px; font-weight: 650; }
 .clanMark img { width: 100%; height: 100%; object-fit: cover; }
-.clanMemberBadge { border: 1px solid var(--sabha-border); border-radius: 999px; background: var(--sabha-surface-muted); padding: 5px 9px; color: var(--sabha-text-muted); font-size: 11px; font-weight: 600; }
 .clanCard h2 { margin: 18px 0 0; color: var(--sabha-text); font-size: 20px; font-weight: 650; letter-spacing: -.025em; }
 .clanCard > p { margin: 8px 0 20px; color: var(--sabha-text-muted); font-size: 13px; line-height: 1.7; }
 .clanCardFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; border-top: 1px solid var(--sabha-border); padding-top: 14px; }
@@ -116,6 +135,8 @@
 @media (max-width: 860px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
   .aside { position: static; }
+  .clanIntroLayout { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 20px; }
+  .myClans { max-width: none; }
 }
 
 @media (max-width: 600px) {
@@ -127,3 +148,6 @@
   .deleteConfirm { align-items: flex-start; flex-direction: column; }
   .deleteActions { width: 100%; justify-content: flex-end; }
 }
+
+.post { scroll-margin-top: 100px; }
+.post:target { outline: 1px solid var(--sabha-accent); outline-offset: 3px; }

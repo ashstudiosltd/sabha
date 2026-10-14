@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BackNavigation from "@/components/sabha/back-navigation";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -323,6 +324,7 @@ export default function EditProfilePage() {
         onSubmit={handleSubmit}
         className="mx-auto w-full max-w-[980px]"
       >
+        <BackNavigation fallback={{ href: `/profile/${form.username}`, label: "Back to profile" }} className="mb-5" />
         {/* Page header */}
 
         <div className="flex items-center justify-between gap-4">

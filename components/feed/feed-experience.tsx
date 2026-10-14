@@ -6,6 +6,7 @@ import { ArrowUpRight, Link2, MessageCircle, Share2, Trash2 } from "lucide-react
 import ShareSheet from "@/components/ShareSheet";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { createClient } from "@/lib/supabase/client";
+import FeedLikeButton, { type FeedLikeSummary } from "./feed-like-button";
 import FeedModeSwitch from "@/components/feed/feed-mode-switch";
 import styles from "./feed-experience.module.css";
 
@@ -102,6 +103,19 @@ function FeedTimestamp({ value }: { value: string }) {
 
 export default function FeedExperience({ currentProfile, activeView, canParticipate = true, canModerate = false, initialPosts, initialHasMore = false, initialCursor, searchQuery = "", loadError }: FeedExperienceProps) {
   const [posts, setPosts] = useState(initialPosts);
+  const [likeSummaries, setLikeSummaries] = useState<Record<string, FeedLikeSummary>>({});
+  const likePostIds = posts.map((post) => post.id).join(",");
+  useEffect(() => {
+    if (!likePostIds) return;
+    let active = true;
+    const supabase = createClient();
+    void supabase.rpc("get_feed_like_summaries", { p_post_ids: likePostIds.split(",").slice(-100) }).then(({ data, error }) => {
+      if (!active || error) return;
+      const summaries = Object.fromEntries((data ?? []).map((item: FeedLikeSummary & { post_id: string }) => [item.post_id, item]));
+      setLikeSummaries((current) => ({ ...current, ...summaries }));
+    });
+    return () => { active = false; };
+  }, [likePostIds]);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
@@ -259,7 +273,7 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
             {visiblePosts.length ? (
               <div className={styles.posts}>
                 {visiblePosts.map((post) => (
-                  <article className={`${styles.post} sabha-surface`} key={post.id}>
+                  <article id={`post-${post.id}`} className={`${styles.post} sabha-surface`} key={post.id}>
                     <div className={styles.postHeader}>
                       <ProfileAvatar name={post.author.name} avatarUrl={post.author.avatarUrl} size="large" />
                       <div className={styles.author}>
@@ -278,6 +292,7 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
                       </a>
                     )}
                     <div className={styles.postFooter}>
+                      <FeedLikeButton postId={post.id} userId={currentProfile.id} summary={likeSummaries[post.id]} disabled={!canParticipate} onChange={(summary) => setLikeSummaries((current) => ({ ...current, [post.id]: summary }))} />
                       {canParticipate && <>
                         <button type="button" onClick={() => { setReplyingTo(replyingTo === post.id ? null : post.id); setReplyText(""); setReplyError(null); }} className={styles.replyToggle}>
                           <MessageCircle size={15} /> {post.replies.length ? `Reply · ${post.replies.length}` : "Reply"}

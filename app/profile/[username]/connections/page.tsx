@@ -1,3 +1,4 @@
+import BackNavigation from "@/components/sabha/back-navigation";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -66,12 +67,7 @@ export default async function ConnectionsPage({
   return (
     <main className="min-h-screen bg-[#f5f5f7] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif]">
       <div className="mx-auto w-full max-w-[760px] px-4 py-8 sm:px-8 sm:py-12">
-        <Link
-          href={`/profile/${profile.username}`}
-          className="text-[14px] text-[#0066cc] hover:underline"
-        >
-          ← Back to profile
-        </Link>
+        <BackNavigation fallback={{ href: `/profile/${profile.username}`, label: "Back to profile" }} />
 
         <h1 className="mt-4 text-[32px] font-semibold tracking-[-0.02em] text-[#1d1d1f] sm:text-[40px]">
           {profile.name}

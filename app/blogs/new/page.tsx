@@ -170,12 +170,7 @@ export default function NewPostPage() {
   return (
     <main className="min-h-screen bg-[#f5f5f7] font-[-apple-system,BlinkMacSystemFont,'SF_Pro_Text','Helvetica_Neue',Helvetica,Arial,sans-serif]">
       <div className="mx-auto w-full max-w-[760px] px-4 py-8 sm:px-8 sm:py-12">
-        <Link
-          href="/blogs"
-          className="text-[14px] text-[#0066cc] hover:underline"
-        >
-          ← Back to blogs
-        </Link>
+
 
         <h1 className="mt-4 text-[32px] font-semibold tracking-[-0.02em] text-[#1d1d1f] sm:text-[40px]">
           New post

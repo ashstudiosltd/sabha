@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
@@ -10,12 +9,16 @@ function makeSlug(value: string) {
   return value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 54).replace(/-$/g, "");
 }
 
+function countWords(value: string) {
+  const trimmed = value.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
 export default function ClanCreateForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
-  const [avatarUrl, setAvatarUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const slug = useMemo(() => makeSlug(name), [name]);
@@ -25,7 +28,7 @@ export default function ClanCreateForm() {
     const cleanName = name.trim();
     const cleanDescription = description.trim();
     if (cleanName.length < 2 || !slug) return setError("Add a Clan name with at least two letters or numbers.");
-    if (cleanDescription.length > 1000) return setError("Keep the description under 1,000 characters.");
+    if (countWords(cleanDescription) > 200) return setError("Keep the Clan description to 200 words or fewer.");
 
     setBusy(true);
     setError(null);
@@ -35,7 +38,6 @@ export default function ClanCreateForm() {
       p_slug: slug,
       p_description: cleanDescription,
       p_visibility: visibility,
-      p_avatar_url: avatarUrl.trim() || null,
     });
     if (createError || typeof data !== "string") {
       setError(createError?.code === "23505" ? "That Clan URL is already in use. Try a slightly different name." : "The Clan couldn’t be created. Please try again.");
@@ -49,7 +51,7 @@ export default function ClanCreateForm() {
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-4 py-8 sm:px-8 sm:py-12">
-      <Link href="/feed?view=clans" className="text-[14px] text-[#0066cc] hover:underline">← Back to Clans</Link>
+
       <header className="mt-7">
         <h1 className="m-0 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-[#1d1d1f] sm:text-[40px]">Create a Clan</h1>
         <p className="mt-3 text-[14px] leading-6 text-[#6e6e73]">Give your community a home to share progress and build together.</p>
@@ -61,13 +63,10 @@ export default function ClanCreateForm() {
           <input className="sabha-field h-12 px-4 text-[15px]" value={name} onChange={(event) => setName(event.target.value)} placeholder="For example, Open Source Builders" maxLength={60} required />
         </label>
         <label className="grid gap-2 text-[13px] font-medium text-[#424245]">
-          What is this Clan about?
-          <textarea className="sabha-field min-h-[140px] resize-y px-4 py-3 text-[14px] leading-6" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describe what members are building or learning together." maxLength={1000} />
+          <span className="flex items-center justify-between gap-3">What is this Clan about? <span className="text-[11px] font-normal text-[#8a8a8f]">{countWords(description)} / 200 words</span></span>
+          <textarea className="sabha-field min-h-[112px] max-h-[180px] resize-none overflow-y-auto px-4 py-3 text-[14px] leading-6" value={description} onChange={(event) => { if (countWords(event.target.value) <= 200) setDescription(event.target.value); }} placeholder="Describe what members are building or learning together." maxLength={3000} />
         </label>
-        <label className="grid gap-2 text-[13px] font-medium text-[#424245]">
-          Clan avatar URL <span className="font-normal text-[#8a8a8f]">Optional · HTTPS image link</span>
-          <input className="sabha-field h-12 px-4 text-[14px]" type="url" inputMode="url" value={avatarUrl} onChange={(event) => setAvatarUrl(event.target.value)} placeholder="https://example.com/clan-avatar.png" maxLength={2048} />
-        </label>
+        <p className="m-0 text-[12px] leading-5 text-[#6e6e73]">You can add the Clan image later from Clan settings.</p>
         <fieldset className="grid gap-3 border-0 p-0">
           <legend className="mb-2 text-[13px] font-medium text-[#424245]">Who can join?</legend>
           <label className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-[#e5e5ea] p-4">

@@ -1,20 +1,11 @@
+import type { NotificationType } from "@/lib/notification-types";
 import { createClient } from "@/lib/supabase/server";
 
 export type Notification = {
   id: string;
   recipient_id: string;
   actor_id: string | null;
-  type:
-    | "clan_invite"
-    | "clan_join_request"
-    | "clan_join_accepted"
-    | "post_like"
-    | "post_comment"
-    | "new_blog_post"
-    | "new_feed_post"
-    | "feed_reply"
-    | "feed_comment"
-    | "follow";
+  type: NotificationType;
   title: string;
   message: string | null;
   entity_id: string | null;

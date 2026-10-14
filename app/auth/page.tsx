@@ -1,4 +1,6 @@
 "use client";
+
+import BackNavigation from "@/components/sabha/back-navigation";
 import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import { sabhaAuthReturn } from "@/lib/auth-return";
@@ -66,6 +68,7 @@ function AuthContent() {
 
       {/* Main layout */}
       <div className="relative z-10 flex h-full">
+        <div className="absolute right-6 top-5 z-20"><BackNavigation className="sabha-back-dark" /></div>
         {/* Sidebar */}
         <div className="relative flex w-full max-w-md flex-col justify-between p-8">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />

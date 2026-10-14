@@ -1,4 +1,3 @@
-there
 -- Public metadata for shared Feed posts. The Feed tables stay member-only;
 -- this RPC returns only the single post requested by its share URL.
 create table if not exists public.feed_comments (

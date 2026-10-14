@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import BackNavigation from "@/components/sabha/back-navigation";
 import { useRouter } from "next/navigation";
 
 import SabhaPostComposer, { type SabhaPostDraft, type SabhaPostType } from "@/components/sabha/post-composer";
@@ -56,9 +56,7 @@ export default function FeedPostForm({ authorId, authorName, authorUsername, pos
 
   return (
     <div className="mx-auto w-full max-w-[760px] px-4 py-8 sm:px-8 sm:py-12">
-      <Link href={feedUrl} className="text-[14px] text-[#0066cc] hover:underline">
-        ← Back to Feed
-      </Link>
+      <BackNavigation fallback={{ href: feedUrl, label: clanName ? `Back to ${clanName}` : "Back to Feed" }} />
       <header className="mt-7">
         <h1 className="m-0 text-[34px] font-semibold leading-[1.08] tracking-[-0.045em] text-[#1d1d1f] sm:text-[40px]">New post</h1>
         <p className="mt-3 text-[14px] leading-6 text-[#6e6e73]">Posting as <strong className="font-medium text-[#1d1d1f]">{authorName}</strong> · @{authorUsername}{clanName ? <> · Posting to <strong className="font-medium text-[#1d1d1f]">{clanName}</strong></> : null}</p>

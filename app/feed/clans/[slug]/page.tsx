@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Users } from "lucide-react";
 import Image from "next/image";
 
+import ClanRequestAccess from "@/components/feed/clan-request-access";
 import ClanJoinButton from "@/components/feed/clan-join-button";
-import ClanManagement, { type ClanMemberSummary } from "@/components/feed/clan-management";
+import { type ClanMemberSummary } from "@/components/feed/clan-management";
 import FeedExperience from "@/components/feed/feed-experience";
 import SabhaNavbar from "@/components/sabha/sabha-navbar";
 import { createClient } from "@/lib/supabase/server";
@@ -12,12 +13,13 @@ import styles from "../../feed.module.css";
 
 interface ClanPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ post?: string }>;
 }
 
 export const dynamic = "force-dynamic";
 
-export default async function ClanPage({ params }: ClanPageProps) {
-  const { slug } = await params;
+export default async function ClanPage({ params, searchParams }: ClanPageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/auth?next=${encodeURIComponent(`/feed/clans/${slug}`)}`);
@@ -27,7 +29,12 @@ export default async function ClanPage({ params }: ClanPageProps) {
     supabase.from("profiles").select("id, name, username, avatar_url").eq("id", user.id).maybeSingle(),
   ]);
   const clan = clanResult.data;
-  if (!clan) notFound();
+  if (!clan) {
+    const { data: preview } = await supabase.rpc("get_requestable_clan", { p_slug: slug });
+    const requestable = preview?.[0];
+    if (!requestable) notFound();
+    return <main className="sabha-design min-h-screen"><SabhaNavbar section="feed" feedView="clans" showClanCreateAction={false} searchPath="/feed" /><div className="mx-auto max-w-[640px] px-5 py-12"><section className="sabha-surface p-6 sm:p-9"><p className="text-[12px] text-[#6e6e73]">Private Clan</p><h1 className="mt-2 text-[30px] font-semibold">{requestable.name}</h1><ClanRequestAccess clanId={requestable.id} pending={requestable.request_status === "pending"} archived={requestable.archived} /></section></div></main>;
+  }
 
   const [membershipResult, memberCountResult, ownerResult, postsResult] = await Promise.all([
     supabase.from("clan_members").select("role").eq("clan_id", clan.id).eq("user_id", user.id).maybeSingle(),
@@ -35,35 +42,25 @@ export default async function ClanPage({ params }: ClanPageProps) {
     supabase.from("profiles").select("name, username").eq("id", clan.created_by).maybeSingle(),
     supabase.from("feed_posts").select("id, author_id, clan_id, post_type, title, body, resource_kind, resource_url, resource_label, created_at").eq("clan_id", clan.id).order("created_at", { ascending: false }).limit(50),
   ]);
+  const { data: archiveState } = await supabase.from("clans").select("archived_at").eq("id", clan.id).maybeSingle();
+  const archived = !!archiveState?.archived_at;
   const isMember = !!membershipResult.data;
   const currentRole = membershipResult.data?.role as ClanMemberSummary["role"] | undefined;
   const canManage = currentRole === "owner" || currentRole === "admin";
   const canModerate = canManage || currentRole === "moderator";
-  const membersResult = canManage
-    ? await supabase.from("clan_members").select("user_id, role").eq("clan_id", clan.id).order("joined_at", { ascending: true }).limit(100)
-    : { data: [], error: null };
-  const memberIds = (membersResult.data ?? []).map((member) => member.user_id);
-  const memberProfilesResult = memberIds.length
-    ? await supabase.from("profiles").select("id, name, username, avatar_url").in("id", memberIds)
-    : { data: [], error: null };
-  const memberProfiles = new Map((memberProfilesResult.data ?? []).map((profile) => [profile.id, profile]));
-  const roster: ClanMemberSummary[] = (membersResult.data ?? []).map((member) => {
-    const profile = memberProfiles.get(member.user_id);
-    return {
-      user_id: member.user_id,
-      role: member.role as ClanMemberSummary["role"],
-      name: profile?.name ?? "Community member",
-      username: profile?.username ?? "member",
-      avatar_url: profile?.avatar_url ?? null,
-    };
-  });
-  const postIds = (postsResult.data ?? []).map((post) => post.id);
+  const pinnedId = query.post && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query.post) ? query.post : null;
+  const recentPosts = postsResult.data ?? [];
+  const { data: pinnedPost } = pinnedId && !recentPosts.some((post) => post.id === pinnedId)
+    ? await supabase.from("feed_posts").select("id, author_id, clan_id, post_type, title, body, resource_kind, resource_url, resource_label, created_at").eq("id", pinnedId).eq("clan_id", clan.id).maybeSingle()
+    : { data: null };
+  const loadedPosts = pinnedPost ? [pinnedPost, ...recentPosts] : recentPosts;
+  const postIds = loadedPosts.map((post) => post.id);
   const [repliesResult, commentsResult] = await Promise.all([
     postIds.length ? supabase.from("feed_replies").select("id, post_id, author_id, body, created_at").in("post_id", postIds).order("created_at", { ascending: true }) : Promise.resolve({ data: [], error: null }),
     postIds.length ? supabase.from("feed_comments").select("id, post_id, author_id, body, created_at").in("post_id", postIds).order("created_at", { ascending: true }) : Promise.resolve({ data: [], error: null }),
   ]);
   const relatedProfileIds = [...new Set([
-    ...(postsResult.data ?? []).map((post) => post.author_id),
+    ...loadedPosts.map((post) => post.author_id),
     ...(repliesResult.data ?? []).map((reply) => reply.author_id),
     ...(commentsResult.data ?? []).map((comment) => comment.author_id),
   ])];
@@ -75,7 +72,7 @@ export default async function ClanPage({ params }: ClanPageProps) {
     const author = authors.get(id);
     return { id, name: author?.name ?? "Community member", username: author?.username ?? "member", avatarUrl: author?.avatar_url ?? null };
   };
-  const posts = (postsResult.data ?? []).map((post) => ({
+  const posts = loadedPosts.map((post) => ({
     ...post,
     author: getAuthor(post.author_id),
     replies: (repliesResult.data ?? []).filter((reply) => reply.post_id === post.id).map((reply) => ({ ...reply, author: getAuthor(reply.author_id) })),
@@ -106,19 +103,20 @@ export default async function ClanPage({ params }: ClanPageProps) {
                 <p className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-[#6e6e73]">
                   <span className="inline-flex items-center gap-1.5"><Users size={14} /> {memberCountResult.count ?? 0} {(memberCountResult.count ?? 0) === 1 ? "member" : "members"}</span>
                   <span aria-hidden="true">·</span>
-                  <span>Created by {ownerResult.data?.name ?? `@${ownerResult.data?.username ?? "member"}`}</span>
+                  <span>Owned by {ownerResult.data?.name ?? `@${ownerResult.data?.username ?? "member"}`}</span>
                 </p>
               </div>
             </div>
             <div className="flex shrink-0 flex-wrap items-center gap-2">
-              {(clan.visibility === "public" || isMember) && <ClanJoinButton clanId={clan.id} isMember={isMember} isOwner={membershipResult.data?.role === "owner"} />}
-              {isMember && <Link href={`/feed/new?type=conversation&clan=${encodeURIComponent(clan.slug)}`} className="sabha-button sabha-button-primary">New post</Link>}
+              {canManage && <Link href={`/feed/clans/${clan.slug}/settings`} className="sabha-button">Settings</Link>}
+              {(!archived || isMember) && (clan.visibility === "public" || isMember) && <ClanJoinButton clanId={clan.id} isMember={isMember} isOwner={membershipResult.data?.role === "owner"} />}
+              {isMember && !archived && <Link href={`/feed/new?type=conversation&clan=${encodeURIComponent(clan.slug)}`} className="sabha-button sabha-button-primary">New post</Link>}
             </div>
           </div>
         </section>
-        {canManage && <ClanManagement clanId={clan.id} clanName={clan.name} clanDescription={clan.description ?? ""} clanVisibility={clan.visibility} clanAvatarUrl={clan.avatar_url} members={roster} currentUserId={user.id} currentRole={currentRole!} />}
+        {archived && <p role="status" className="my-4 rounded-xl border border-[#d1d5db] bg-white px-5 py-4 text-sm text-[#6e6e73]">This Clan is archived. Its posts remain available to read.</p>}
         <section className="mt-2">
-          <FeedExperience key={clan.id} currentProfile={currentProfile} activeView="all" canParticipate={isMember} canModerate={canModerate} initialPosts={feedPosts} loadError={loadError} />
+          <FeedExperience key={`${clan.id}:${pinnedId ?? "recent"}:${pinnedId ? `${repliesResult.data?.at(-1)?.id ?? ""}:${commentsResult.data?.at(-1)?.id ?? ""}` : ""}`} currentProfile={currentProfile} activeView="all" canParticipate={isMember && !archived} canModerate={canModerate} initialPosts={feedPosts} loadError={loadError} />
         </section>
       </div>
     </main>

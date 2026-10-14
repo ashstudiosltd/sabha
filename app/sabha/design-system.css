@@ -172,3 +172,28 @@
 @media (prefers-reduced-motion: reduce) {
   .sabha-design *, .sabha-design *::before, .sabha-design *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Contextual navigation uses the same control language across Sabha. */
+.sabha-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  width: fit-content;
+  padding: 6px 8px;
+  margin-left: -8px;
+  border-radius: 8px;
+  color: #6e6e73;
+  font-family: var(--sabha-font);
+  font-size: 12px;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: background 160ms var(--sabha-ease), color 160ms var(--sabha-ease);
+}
+.sabha-back-link:hover { background: #eceef0; color: #1d1d1f; }
+.sabha-back-link:focus-visible { outline: 2px solid var(--sabha-accent); outline-offset: 3px; }
+.sabha-back-link.sabha-back-dark { color: #d2d2d7; }
+.sabha-back-link.sabha-back-dark:hover { color: white; background: rgb(255 255 255 / 10%); }
+@media (prefers-reduced-motion: reduce) { .sabha-back-link { transition: none; } }
+
+.sabha-brand-strip-inner > .sabha-back-link { margin-left: auto; }
