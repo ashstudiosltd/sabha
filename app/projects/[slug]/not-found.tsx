@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function ProjectNotFound() { return <section className="dv-surface dv-empty"><h1>Project unavailable.</h1><p>This project may be private, unpublished, or no longer available.</p><Link href="/projects" className="dv-button">Explore projects</Link><Link href="/auth?next=%2Fprojects%3Fview%3Dmine" className="dv-button">Sign in to your workspace</Link></section>; }

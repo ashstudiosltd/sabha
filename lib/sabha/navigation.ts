@@ -2,6 +2,8 @@ export interface BackDestination { href: string; label: string }
 
 export function backDestination(pathname: string, search = ""): BackDestination {
   const query = new URLSearchParams(search);
+  if (pathname.startsWith("/projects/") || pathname.startsWith("/sabha/projects/")) return { href: "/projects", label: "Back to Projects" };
+  if (pathname === "/projects" || pathname === "/sabha/projects") return { href: "/feed", label: "Back to Sabha" };
   const clanSettings = pathname.match(/^\/feed\/clans\/([^/]+)\/settings$/);
   if (clanSettings) return { href: `/feed/clans/${clanSettings[1]}`, label: "Back to Clan" };
   if (pathname.startsWith("/feed/clans/") || pathname.startsWith("/feed/clan-invites/")) return { href: "/feed?view=clans", label: "Back to Clans" };
@@ -30,7 +32,7 @@ export function resolveBackDestination(pathname: string, search: string, visited
     if (!href.startsWith("/") || href.startsWith("//") || href.includes("\\")) continue;
     const url = new URL(href, "https://sabha.local");
     if (url.origin !== "https://sabha.local" || url.pathname === pathname || url.pathname.startsWith("/auth") || url.pathname.startsWith("/api/")) continue;
-    if ((pathname.startsWith("/profile/") && !pathname.endsWith("/connections")) || pathname === "/auth" || pathname === "/notifications") {
+    if ((pathname.startsWith("/profile/") && !pathname.endsWith("/connections")) || pathname === "/auth" || pathname === "/notifications" || pathname === "/projects" || pathname === "/sabha/projects") {
       if (url.pathname === "/blogs" || url.pathname === "/feed" || /^\/feed\/clans\/[^/]+$/.test(url.pathname)) {
         return { href, label: url.pathname === "/blogs" ? "Back to Blogs" : url.pathname === "/feed" ? "Back to Feed" : "Back to Clan" };
       }

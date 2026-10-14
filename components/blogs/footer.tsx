@@ -94,7 +94,7 @@ const FooterProximityLetter = ({
 const siteLinks = [
   { label: "BLOGS", href: "/sabha/blogs" },
   { label: "FEED", href: "/sabha/feed" },
-  { label: "PROJECTS", href: "/sabha/projects" },
+  { label: "PROJECTS", href: "/projects" },
 ];
 
 const communityLinks = [

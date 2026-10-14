@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
+import ProjectsNavigation from "@/components/workspace/projects-navigation";
 import { SabhaNavigationHistory } from "@/components/sabha/back-navigation";
 
 const geistSans = Geist({
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable} ${roboto.variable}`}>
       <body className="relative text-white">
         <SabhaNavigationHistory />
+        <ProjectsNavigation />
         {/* Gradient background only */}
         <div className="absolute inset-0 -z-10" />
         

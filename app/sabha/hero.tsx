@@ -212,7 +212,7 @@ export default function SabhaHero() {
             <NavigationItem
               title="PROJECTS"
               subtitle="Build"
-              href="/sabha/projects"
+              href="/projects"
               mouseX={mouseX}
               mouseY={mouseY}
             />

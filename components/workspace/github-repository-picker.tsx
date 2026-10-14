@@ -1,0 +1,8 @@
+"use client";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { connectGitHub } from "@/app/projects/github-actions";
+export default function RepositoryPicker({slug,repositories}:{slug:string;repositories:{id:number;installation:number;full_name:string;private:boolean}[]}) {
+ const [selected,setSelected]=useState("");const [error,setError]=useState("");const [pending,start]=useTransition();const router=useRouter();
+ return <form className="dv-form dv-surface" onSubmit={event=>{event.preventDefault();const repo=repositories.find(r=>`${r.installation}:${r.id}`===selected);if(!repo)return;start(async()=>{const result=await connectGitHub(slug,repo.id,repo.installation);if(result.ok){router.replace(`/projects/${slug}`);router.refresh();}else setError(result.error);});}}><label className="dv-field">Repository<select className="dv-input" value={selected} disabled={pending} required onChange={e=>setSelected(e.target.value)}><option value="">Choose a repository</option>{repositories.map(r=><option key={`${r.installation}:${r.id}`} value={`${r.installation}:${r.id}`}>{r.full_name}{r.private?" · Private":" · Public"}</option>)}</select></label><p className="dv-note">This replaces the project’s current repository connection. Public repository activity, stars, and forks can appear on a published public project. Private repository activity stays restricted to the project team. Commit titles are visible only to project members.</p>{error&&<p role="alert" className="dv-error">{error}</p>}<button className="dv-button dv-button-primary" disabled={pending||!selected}>{pending?"Connecting…":"Connect repository"}</button></form>;
+}

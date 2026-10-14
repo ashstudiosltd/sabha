@@ -46,7 +46,7 @@ const sectionTitles = {
 const sectionLinks = [
   { id: "blogs", label: "Blogs", href: "/blogs" },
   { id: "feed", label: "Feed", href: "/feed" },
-  { id: "projects", label: "Projects", href: "/sabha/projects" },
+  { id: "projects", label: "Projects", href: "/projects" },
 ] as const;
 
 interface CurrentProfile {
@@ -77,7 +77,7 @@ export default function SabhaNavbar({
         : "blogs"
   );
   const sectionTitle = sectionTitles[section];
-  const sectionHref = section === "blogs" ? "/blogs" : section === "feed" ? "/feed" : "/sabha/projects";
+  const sectionHref = section === "blogs" ? "/blogs" : section === "feed" ? "/feed" : "/projects";
   const searchPlaceholder = placeholder ?? {
     blogs: "Search for a topic, subtopic, or tag",
     feed: "Search the community feed",

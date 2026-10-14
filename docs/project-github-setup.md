@@ -1,0 +1,84 @@
+# Project GitHub connection
+
+## Implemented behavior
+
+One repository per project. Only the current project owner can connect, replace, refresh, or disconnect a repository on an active project. Connecting requires both the signed-in Devvrats identity and GitHub App authorization. The repository must be accessible to that user through this App installation and the user must have push/admin permission. Knowing an installation ID is not sufficient.
+
+The project page renders a purple daily graph, stars, and forks. Public responses contain no repository name, commit messages, authors, SHAs, file paths, or tokens. Private repositories require explicit project membership. Owners and members can request the ten latest default-branch commit titles in a separate control; that action rechecks authentication, project readability, and membership before fetching from GitHub. Feed/Clan membership does not yet grant project membership automatically.
+
+Activity uses GitHub's last-year repository statistics, aligned Sunday–Saturday and shown in UTC. GitHub statistics exclude merge commits and may return 202 while being computed. The UI shows a pending state and retries through reconciliation or owner refresh. An empty repository may have no graph yet. Stars/forks are stored snapshots, not optimistic increments.
+
+## 1. Supabase
+
+Run the entire `supabase/migrations/20261017_project_github.sql` after the existing Projects foundation. This creates the connection table and narrowly granted RPCs. The table itself is inaccessible to anonymous/authenticated clients. The read RPC enforces existing Projects RLS semantics plus repository privacy. Server-only writes require a Supabase service-role key. Keep that key out of every NEXT_PUBLIC variable.
+
+No existing Projects, profiles, Feed, or Clan records are modified by this migration.
+
+## 2. Register a GitHub App
+
+GitHub Settings → Developer settings → GitHub Apps → New GitHub App.
+
+Use your actual deployment host below (for Sabha production, `https://sabha.devvrats.in`):
+
+- Homepage URL: your Projects page.
+- Callback URL: `https://sabha.devvrats.in/api/github/callback`.
+- Webhook URL: `https://sabha.devvrats.in/api/github/webhook`.
+- Webhook active: enabled; set a new random webhook secret privately.
+- Repository permissions: Metadata read-only, Contents read-only. No write permissions required.
+- Subscribe to Push, Repository, Star, and Fork events. Installation and installation-repository events are also handled.
+- Leave “Request user authorization (OAuth) during installation” unchecked; Projects initiates its own account-bound authorization flow.
+- Enable installation on the accounts that will use Projects.
+- Generate a private key; create a client secret. The App ID, client ID, and App slug are also needed.
+- Keep user access token expiration enabled. The app uses the short-lived user token only during repository selection and stores no refresh token.
+
+Install the App using selected repositories. The Devvrats owner then chooses Connect GitHub on the project, authorizes the App, and selects a repository. If no installation exists yet, the picker offers Install GitHub App and Authorize again. Installation alone does not attach a repository to a project.
+
+For localhost, register a separate development GitHub App with `http://localhost:3000/api/github/callback`. GitHub cannot deliver webhooks to localhost; use a development HTTPS tunnel if testing deliveries. Set the development App origin consistently with the callback host.
+
+## 3. Server environment
+
+Add these privately in `.env.local` for development and Vercel Production environment settings for production, then redeploy:
+
+```
+GITHUB_APP_ID=
+GITHUB_APP_CLIENT_ID=
+GITHUB_APP_CLIENT_SECRET=
+GITHUB_APP_PRIVATE_KEY=
+GITHUB_APP_SLUG=
+GITHUB_APP_ORIGIN=https://sabha.devvrats.in
+GITHUB_WEBHOOK_SECRET=
+SUPABASE_SERVICE_ROLE_KEY=
+CRON_SECRET=
+```
+
+`GITHUB_APP_PRIVATE_KEY` accepts the full PEM with real newlines or escaped `\n`. `GITHUB_APP_ORIGIN` is a trusted canonical origin configured by the operator; callback redirects do not trust request Host headers. Keep these values server-only. Existing public Supabase URL and publishable key remain in use for user authentication.
+
+OAuth uses PKCE (S256). State is random, account/project-bound, expires after ten minutes, and is stored with the temporary user token in an authenticated encrypted HttpOnly, host-only cookie. Repository choices are verified again server-side during connection. Installation tokens are generated only server-side and restricted to the one repository with read permissions.
+
+## 4. Schedule reconciliation
+
+Configure a scheduler to request `GET https://sabha.devvrats.in/api/github/reconcile` every five minutes with `Authorization: Bearer <CRON_SECRET>`. Configure the header privately; never put it in a URL. Vercel Cron can call this path when the plan supports the desired frequency; its CRON_SECRET authorization is checked by the handler. No cron configuration has been added automatically because hosting plans have different schedule limits.
+
+Each invocation processes up to four oldest/pending snapshots concurrently. Increase scheduler capacity/batch size before exceeding its backlog capacity. The route has a 60-second duration budget; GitHub requests time out after 15 seconds. Per-connection database leases prevent concurrent refreshes and enforce a one-minute minimum retry interval. A failed sync marks the connection unavailable and hides its public graph. Pending GitHub statistics are retried by the scheduler.
+
+Signed webhook events immediately hide the public snapshot and invalidate in-flight refreshes before scheduling a refresh. Installation removal/suspension, repository removal/deletion, permission loss, and private visibility stop public display. Duplicate deliveries recalculate snapshots rather than increment counts. The scheduler is required to recover missed deliveries/background failures. Public data expires after two hours without a successful refresh; private visibility changes can have a bounded stale window if GitHub does not deliver its event. Public responses never include commit details even during that window.
+
+## 5. Acceptance walkthrough
+
+After configuration and migration:
+
+1. Sign in as an existing project owner; connect a selected repository.
+2. Verify pending state becomes a purple graph and accurate stars/forks after GitHub statistics are ready.
+3. Push to its default branch; verify only that project's repository graph changes. Push to an unrelated repository; its commits must not appear.
+4. Open the public project signed out. Verify only aggregates appear; private repository aggregates are hidden.
+5. As a project member, open Member commit details. As an unrelated signed-in user, invoking the same action must return no titles.
+6. Disconnect/reconnect, change repository visibility, remove the App installation, and confirm public snapshots disappear.
+7. Inspect GitHub App Recent deliveries for successful webhook responses and the scheduler for successful reconciliation.
+
+No live GitHub authorization, repository writes, credential changes, or database migration were performed during implementation. TypeScript compilation passed. Live GitHub authorization, webhooks, and database permissions have not been exercised; the earlier production build predates this integration.
+
+## Reference
+
+- https://docs.github.com/en/rest/metrics/statistics
+- https://docs.github.com/en/rest/apps/installations
+- https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app
