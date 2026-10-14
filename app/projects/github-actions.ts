@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getProjectBySlug } from "@/lib/projects/server";
 import { admin, configured, FLOW_COOKIE, unseal, repositories, installationToken, github } from "@/lib/github/app";
+import { GitHubError, reportGitHubError } from "@/lib/github/errors";
 import { syncRepository, type Connection } from "@/lib/github/sync";
 async function owner(slug:string) {
  const db=await createClient();const {data:{user}}=await db.auth.getUser();const project=await getProjectBySlug(slug);
@@ -32,18 +33,18 @@ export async function refreshGitHub(slug:string) {
  try {const {project}=await owner(slug);const {data,error}=await admin().from("project_github_connections").select("*").eq("project_id",project.id).single();if(error)throw new Error("Connect a repository first.");
  if(data.synced_at&&Date.now()-Date.parse(data.synced_at)<60000)throw new Error("Activity was just refreshed. Try again in a minute.");
  await syncRepository(data as Connection);revalidatePath(`/projects/${slug}`);return {ok:true as const};
- }catch{return {ok:false as const,error:"Activity couldn’t be refreshed yet. GitHub may still be preparing it. Try again shortly."};}
+ }catch(cause){const error=reportGitHubError(cause,"refresh");return {ok:false as const,error:cause instanceof GitHubError?error.message:"Activity couldn’t be refreshed yet. Wait a minute and try again."};}
 }
 // This action never returns commit details to public viewers, including on public repositories.
 export async function memberCommits(slug:string) {
  try {const db=await createClient();const {data:{user}}=await db.auth.getUser();const project=await getProjectBySlug(slug);if(!user||!project)throw new Error();
  const {data:members}=await db.from("project_members").select("profile_id").eq("project_id",project.id).eq("profile_id",user.id);
  if(project.owner_id!==user.id&&!members?.length)throw new Error();
- const {data:c,error}=await admin().from("project_github_connections").select("*").eq("project_id",project.id).single();if(error||c.sync_status==="unavailable")throw new Error();
+ const {data:c,error}=await admin().from("project_github_connections").select("*").eq("project_id",project.id).single();if(error||!c)throw new GitHubError("connection-storage","The repository connection couldn’t be loaded. Check the Supabase server key and GitHub migration.","load-connection");
  const token=await installationToken(c.installation_id,c.repository_id);
  const {data:repo}=await github<{full_name:string;default_branch:string}>(`/repositories/${c.repository_id}`,token);
  const path=repo.full_name.split("/").map(encodeURIComponent).join("/");
  const {data}=await github<{sha:string;commit:{message:string;author:{date:string}|null}}[]>(`/repos/${path}/commits?sha=${encodeURIComponent(repo.default_branch)}&per_page=10`,token);
  return {ok:true as const,commits:data.map(c=>({sha:c.sha,title:c.commit.message.split("\n")[0].slice(0,300),date:c.commit.author?.date??null}))};
- }catch{return {ok:false as const,error:"Commit details are unavailable. Check your project access or try again later."};}
+ }catch(cause){const error=reportGitHubError(cause,"member-commits");return {ok:false as const,error:cause instanceof GitHubError?error.message:"Commit details are unavailable. Check your project access or try again later."};}
 }

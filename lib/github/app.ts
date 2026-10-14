@@ -1,19 +1,31 @@
 import "server-only";
-import { createHash, createCipheriv, createDecipheriv, randomBytes, createSign } from "node:crypto";
+import { createHash, createCipheriv, createDecipheriv, randomBytes, createSign, createPrivateKey } from "node:crypto";
+import { GitHubError, githubFailure } from "./errors";
 import { createClient } from "@supabase/supabase-js";
 export function configured() { return ["GITHUB_APP_ID","GITHUB_APP_CLIENT_ID","GITHUB_APP_CLIENT_SECRET","GITHUB_APP_PRIVATE_KEY","GITHUB_APP_SLUG","GITHUB_APP_ORIGIN","SUPABASE_SERVICE_ROLE_KEY","GITHUB_WEBHOOK_SECRET"].every(k => !!process.env[k]); }
 export function origin() { const url = new URL(process.env.GITHUB_APP_ORIGIN!); if (url.protocol !== "https:" && !["localhost","127.0.0.1"].includes(url.hostname)) throw new Error("Invalid GitHub origin"); return url.origin; }
 export function admin() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false, autoRefreshToken: false } }); }
 export async function github<T>(path: string, token: string, options: RequestInit = {}): Promise<{ data: T; status: number }> {
- const response = await fetch(`https://api.github.com${path}`, { ...options, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000), headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2026-03-10", ...options.headers } });
- if (!response.ok) throw new Error(`GitHub request failed (${response.status})`);
+ const stage = path.includes("/access_tokens") ? "installation-token" : path.includes("/stats/") ? "activity" : path.includes("/commits?") ? "commits" : "repository-access";
+ let response: Response;
+ try { response = await fetch(`https://api.github.com${path}`, { ...options, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000), headers: { Accept: "application/vnd.github+json", Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2026-03-10", ...options.headers } }); } catch { throw new GitHubError("network", "GitHub couldn’t be reached. Try again shortly.", stage); }
+ if (!response.ok) throw githubFailure(response.status, stage);
  return { data: response.status === 204 ? null as T : await response.json() as T, status: response.status };
 }
 export async function installationToken(id: number, repositoryId: number) {
  const now = Math.floor(Date.now()/1000);
  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
- const body = `${encode({alg:"RS256",typ:"JWT"})}.${encode({iat:now-60,exp:now+540,iss:process.env.GITHUB_APP_ID})}`;
- const signature = createSign("RSA-SHA256").update(body).sign(process.env.GITHUB_APP_PRIVATE_KEY!.replace(/\\n/g,"\n")).toString("base64url");
+ const body = `${encode({alg:"RS256",typ:"JWT"})}.${encode({iat:now-60,exp:now+540,iss:process.env.GITHUB_APP_CLIENT_ID?.trim() || process.env.GITHUB_APP_ID?.trim()})}`;
+ let pem = (process.env.GITHUB_APP_PRIVATE_KEY ?? "").trim();
+ // Environment editors may preserve wrapping quotes and escaped line endings.
+ if ((pem.startsWith('"') && pem.endsWith('"')) || (pem.startsWith("'") && pem.endsWith("'"))) pem = pem.slice(1,-1);
+ pem = pem.replace(/\\r\\n/g,"\n").replace(/\\n/g,"\n").replace(/\r\n/g,"\n").trim();
+ let signature: string;
+ try {
+  const key = createPrivateKey(pem);
+  if (key.asymmetricKeyType !== "rsa") throw new Error();
+  signature = createSign("RSA-SHA256").update(body).sign(key).toString("base64url");
+ } catch { throw new GitHubError("private-key-format", "The GitHub private key in Vercel isn’t a complete RSA PEM key. Replace GITHUB_APP_PRIVATE_KEY with the full downloaded PEM contents, including BEGIN and END lines, then redeploy.", "app-signing"); }
  const {data} = await github<{token:string}>(`/app/installations/${id}/access_tokens`, `${body}.${signature}`, {method:"POST", body:JSON.stringify({repository_ids:[repositoryId],permissions:{contents:"read",metadata:"read"}})});
  return data.token;
 }
