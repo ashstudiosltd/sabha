@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
@@ -11,6 +11,13 @@ export interface ClanMemberSummary {
   name: string;
   username: string;
   avatar_url: string | null;
+}
+
+interface ClanInviteCandidate {
+  id: string;
+  name: string;
+  username: string;
+  avatarUrl: string | null;
 }
 
 export default function ClanManagement({
@@ -34,6 +41,10 @@ export default function ClanManagement({
 }) {
   const router = useRouter();
   const [username, setUsername] = useState("");
+  const [selectedInvitee, setSelectedInvitee] = useState<ClanInviteCandidate | null>(null);
+  const [inviteMatches, setInviteMatches] = useState<ClanInviteCandidate[]>([]);
+  const [searchingMembers, setSearchingMembers] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [name, setName] = useState(clanName);
   const [description, setDescription] = useState(clanDescription);
   const [visibility, setVisibility] = useState(clanVisibility);
@@ -42,6 +53,44 @@ export default function ClanManagement({
   const [error, setError] = useState<string | null>(null);
   const canManage = currentRole === "owner" || currentRole === "admin";
   const isOwner = currentRole === "owner";
+
+  useEffect(() => {
+    const query = username.trim().replace(/^@/, "");
+    if (!canManage || selectedInvitee || query.length < 2) {
+      setInviteMatches([]);
+      setSearchingMembers(false);
+      setSearchError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setSearchingMembers(true);
+    setSearchError(null);
+    const timeout = window.setTimeout(() => {
+      void fetch(`/api/feed/clans/member-search?clanId=${encodeURIComponent(clanId)}&q=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+        cache: "no-store",
+      })
+        .then(async (response) => {
+          const payload = await response.json() as { members?: ClanInviteCandidate[]; error?: string };
+          if (!response.ok) throw new Error(payload.error || "Member search is temporarily unavailable.");
+          setInviteMatches(payload.members ?? []);
+        })
+        .catch((cause: unknown) => {
+          if (cause instanceof DOMException && cause.name === "AbortError") return;
+          setInviteMatches([]);
+          setSearchError(cause instanceof Error ? cause.message : "Member search is temporarily unavailable.");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setSearchingMembers(false);
+        });
+    }, 220);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [canManage, clanId, selectedInvitee, username]);
 
   const saveSettings = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -64,20 +113,26 @@ export default function ClanManagement({
 
   const invite = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!username.trim()) return;
+    if (!selectedInvitee) return;
     setBusy(true);
     setError(null);
     const supabase = createClient();
     const { error: inviteError } = await supabase.rpc("invite_to_clan", {
       p_clan_id: clanId,
-      p_username: username.trim().replace(/^@/, ""),
+      p_username: selectedInvitee.username,
     });
     if (inviteError) {
-      setError(inviteError.message.includes("No Sabha member") ? "No member matched that username." : "The invitation couldn’t be sent. Check the username and try again.");
+      const message = inviteError.message.toLowerCase();
+      if (message.includes("no sabha member")) setError("No member matched that username.");
+      else if (message.includes("already belongs")) setError("That person is already in this Clan.");
+      else if (message.includes("already part") || message.includes("yourself")) setError("You’re already part of this Clan.");
+      else setError("The invitation couldn’t be sent. Check the username and try again.");
       setBusy(false);
       return;
     }
     setUsername("");
+    setSelectedInvitee(null);
+    setInviteMatches([]);
     setError("Invitation sent.");
     setBusy(false);
     router.refresh();
@@ -128,9 +183,40 @@ export default function ClanManagement({
       )}
 
       {canManage && (
-        <form onSubmit={(event) => void invite(event)} className="mt-5 flex flex-col gap-2 border-y border-[#e8e8ed] py-4 sm:flex-row">
-          <input className="sabha-field h-11 min-w-0 flex-1 px-3 text-[13px]" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="Invite by Sabha username" aria-label="Member username" maxLength={40} />
-          <button className="sabha-button sabha-button-primary" type="submit" disabled={busy || !username.trim()}>{busy ? "Working…" : "Send invite"}</button>
+        <form onSubmit={(event) => void invite(event)} className="mt-5 flex flex-col gap-2 border-y border-[#e8e8ed] py-4 sm:flex-row sm:items-start">
+          <div className="relative min-w-0 flex-1">
+            <input
+              className="sabha-field h-11 w-full px-3 text-[13px]"
+              value={username}
+              onChange={(event) => { setUsername(event.target.value); setSelectedInvitee(null); }}
+              placeholder="Search Sabha usernames"
+              aria-label="Search Sabha usernames to invite"
+              aria-autocomplete="list"
+              aria-controls={`clan-invite-options-${clanId}`}
+              aria-expanded={username.trim().replace(/^@/, "").length >= 2 && !selectedInvitee}
+              maxLength={40}
+              autoComplete="off"
+            />
+            {username.trim().replace(/^@/, "").length >= 2 && !selectedInvitee && (
+              <div id={`clan-invite-options-${clanId}`} className="absolute inset-x-0 top-[calc(100%+6px)] z-20 max-h-64 overflow-y-auto rounded-[12px] border border-[#e5e5ea] bg-white p-1.5 shadow-[0_12px_36px_rgba(20,25,35,.14)]" role="listbox" aria-label="Matching Sabha members">
+                {searchingMembers ? <p className="m-0 px-3 py-2.5 text-[12px] text-[#6e6e73]">Searching members…</p> : searchError ? <p className="m-0 px-3 py-2.5 text-[12px] text-red-600" role="status">{searchError}</p> : inviteMatches.length ? inviteMatches.map((candidate) => (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    role="option"
+                    aria-selected="false"
+                    className="flex w-full items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-left hover:bg-[#f5f5f7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0071e3]"
+                    onClick={() => { setSelectedInvitee(candidate); setUsername(candidate.username); setInviteMatches([]); setSearchError(null); }}
+                  >
+                    <ProfileAvatar name={candidate.name} avatarUrl={candidate.avatarUrl} size="small" />
+                    <span className="min-w-0"><strong className="block truncate text-[12px] font-medium text-[#1d1d1f]">{candidate.name}</strong><span className="block truncate text-[11px] text-[#6e6e73]">@{candidate.username}</span></span>
+                  </button>
+                )) : <p className="m-0 px-3 py-2.5 text-[12px] text-[#6e6e73]">No matching members available to invite.</p>}
+              </div>
+            )}
+            {selectedInvitee && <p className="mb-0 mt-1.5 text-[11px] text-[#277143]" role="status">Selected @{selectedInvitee.username}</p>}
+          </div>
+          <button className="sabha-button sabha-button-primary shrink-0" type="submit" disabled={busy || !selectedInvitee}>{busy ? "Working…" : "Send invite"}</button>
         </form>
       )}
 

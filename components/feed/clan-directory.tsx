@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowUpRight, Users } from "lucide-react";
 
 import ClanJoinButton from "@/components/feed/clan-join-button";
+import FeedModeSwitch from "@/components/feed/feed-mode-switch";
 import styles from "./feed-experience.module.css";
 
 export interface ClanSummary {
@@ -19,18 +20,18 @@ export interface ClanSummary {
   visibility: "public" | "private";
 }
 
-export default function ClanDirectory({ clans, memberClanIds, currentUserId, loadError = false }: { clans: ClanSummary[]; memberClanIds: string[]; currentUserId: string; loadError?: boolean }) {
+export default function ClanDirectory({ clans, hasAnyClans, memberClanIds, currentUserId, query = "", loadError = false }: { clans: ClanSummary[]; hasAnyClans: boolean; memberClanIds: string[]; currentUserId: string; query?: string; loadError?: boolean }) {
   const memberSet = new Set(memberClanIds);
 
   return (
     <div className="mx-auto w-full max-w-[1180px] px-5 pb-24 pt-8 sm:px-8 sm:pt-12 lg:px-10">
+      <FeedModeSwitch active="clans" query={query} />
       <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-[12px] font-medium uppercase tracking-[.12em] text-[#6e6e73]">Build together</p>
           <h1 className="mt-2 text-[38px] font-semibold leading-[1.05] tracking-[-.05em] text-[#1d1d1f] sm:text-[48px]">Clans.</h1>
           <p className="mt-3 max-w-[620px] text-[15px] leading-7 text-[#6e6e73]">Small communities for people building, learning, and sharing around a common idea.</p>
         </div>
-        <Link href="/feed/clans/new" className="sabha-button sabha-button-primary">Create a Clan</Link>
       </div>
 
       {loadError ? (
@@ -69,9 +70,18 @@ export default function ClanDirectory({ clans, memberClanIds, currentUserId, loa
       ) : (
         <section className={`${styles.empty} sabha-surface`}>
           <div className={styles.emptyIcon}><Users size={20} /></div>
-          <h3>The first Clan starts here.</h3>
-          <p>Create a space for your project or community, then invite people to build alongside you.</p>
-          <Link href="/feed/clans/new" className="sabha-button sabha-button-primary">Create the first Clan</Link>
+          {hasAnyClans ? (
+            <>
+              <h3>No Clans match this search.</h3>
+              <p>Try a different name or description.</p>
+            </>
+          ) : (
+            <>
+              <h3>The first Clan starts here.</h3>
+              <p>Create a space for your project or community, then invite people to build alongside you.</p>
+              <Link href="/feed/clans/new" className="sabha-button sabha-button-primary">Create the first Clan</Link>
+            </>
+          )}
         </section>
       )}
     </div>

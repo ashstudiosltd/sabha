@@ -91,7 +91,7 @@ export default async function ClanPage({ params }: ClanPageProps) {
 
   return (
     <main className="sabha-design min-h-screen">
-      <SabhaNavbar section="feed" />
+      <SabhaNavbar section="feed" feedView="clans" showClanCreateAction />
       <div className={`${styles.page} mx-auto w-full max-w-[1180px] px-5 pb-8 pt-8 sm:px-8 sm:pt-12 lg:px-10`}>
         <section className="rounded-[18px] border border-[#e5e5ea] bg-white p-6 sm:p-9">
           <div className="flex flex-wrap items-start justify-between gap-5">

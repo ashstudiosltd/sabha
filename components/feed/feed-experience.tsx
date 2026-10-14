@@ -6,6 +6,7 @@ import { ArrowUpRight, Link2, MessageCircle, Share2, Trash2 } from "lucide-react
 import ShareSheet from "@/components/ShareSheet";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { createClient } from "@/lib/supabase/client";
+import FeedModeSwitch from "@/components/feed/feed-mode-switch";
 import styles from "./feed-experience.module.css";
 
 type PostType = "conversation" | "project";
@@ -58,6 +59,9 @@ interface FeedExperienceProps {
   canParticipate?: boolean;
   canModerate?: boolean;
   initialPosts: FeedPost[];
+  initialHasMore?: boolean;
+  initialCursor?: { createdAt: string; id: string } | null;
+  searchQuery?: string;
   loadError: "setup" | "load" | null;
 }
 
@@ -96,8 +100,12 @@ function FeedTimestamp({ value }: { value: string }) {
   return <time dateTime={value}>{date}</time>;
 }
 
-export default function FeedExperience({ currentProfile, activeView, canParticipate = true, canModerate = false, initialPosts, loadError }: FeedExperienceProps) {
+export default function FeedExperience({ currentProfile, activeView, canParticipate = true, canModerate = false, initialPosts, initialHasMore = false, initialCursor, searchQuery = "", loadError }: FeedExperienceProps) {
   const [posts, setPosts] = useState(initialPosts);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const cursor = useRef(initialCursor ?? (initialPosts.length ? { createdAt: initialPosts.at(-1)!.created_at, id: initialPosts.at(-1)!.id } : null));
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [replyError, setReplyError] = useState<string | null>(null);
@@ -181,8 +189,35 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
     setDeletingId(null);
   };
 
-  const visiblePosts = activeView === "all" ? posts : posts.filter((post) => post.post_type === activeView);
+  const query = searchQuery.trim().toLowerCase();
+  const visiblePosts = posts
+    .filter((post) => activeView === "all" || post.post_type === activeView)
+    .filter((post) => !query || [post.title, post.body, post.author.name, post.author.username].some((value) => value?.toLowerCase().includes(query)));
   const sharingPost = visiblePosts.find((post) => post.id === sharingPostId) ?? null;
+
+  const loadOlderPosts = async () => {
+    if (!hasMore || loadingMore || !cursor.current || (activeView !== "conversation" && activeView !== "project")) return;
+    setLoadingMore(true);
+    setLoadMoreError(null);
+    try {
+      const params = new URLSearchParams({ view: activeView, after: cursor.current.createdAt, id: cursor.current.id });
+      const response = await fetch(`/api/feed/posts?${params}`, { credentials: "same-origin", cache: "no-store" });
+      const result = await response.json();
+      if (!response.ok || !Array.isArray(result.posts)) throw new Error(result.error || "Older posts couldn’t be loaded. Please try again.");
+      setPosts((current) => {
+        const existing = new Set(current.map((post) => post.id));
+        return [...current, ...(result.posts as FeedPost[]).filter((post) => !existing.has(post.id))];
+      });
+      if (result.nextCursor && typeof result.nextCursor.createdAt === "string" && typeof result.nextCursor.id === "string") {
+        cursor.current = { createdAt: result.nextCursor.createdAt, id: result.nextCursor.id };
+      }
+      setHasMore(result.hasMore === true);
+    } catch (error) {
+      setLoadMoreError(error instanceof Error ? error.message : "Older posts couldn’t be loaded. Please try again.");
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     const field = replyFieldRef.current;
@@ -215,9 +250,10 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
           </div>
         ) : (
           <>
-            <div className={styles.feedHeading}>
+            <div className={`${styles.feedHeading} ${activeView === "all" ? styles.feedHeadingNoMode : ""}`}>
+              {activeView !== "all" && <FeedModeSwitch active={activeView} query={searchQuery} />}
               <h2>Recents.</h2>
-              <span>{visiblePosts.length} {visiblePosts.length === 1 ? "post" : "posts"}</span>
+              <span className={styles.postCount}>{visiblePosts.length} {visiblePosts.length === 1 ? "post" : "posts"}</span>
             </div>
 
             {visiblePosts.length ? (
@@ -337,6 +373,14 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
                 <div className={styles.emptyIcon}><MessageCircle size={20} /></div>
                 <h3>Nothing here yet.</h3>
                 <p>Be the first to share something with the Sabha community.</p>
+              </div>
+            )}
+            {(hasMore || loadingMore || loadMoreError) && (
+              <div className={styles.pagination}>
+                {loadMoreError && <p className={styles.paginationError} role="alert">{loadMoreError}</p>}
+                <button type="button" className={styles.loadMore} onClick={() => void loadOlderPosts()} disabled={loadingMore}>
+                  {loadingMore ? "Loading older posts…" : loadMoreError ? "Try again" : "Load older posts"}
+                </button>
               </div>
             )}
           </>

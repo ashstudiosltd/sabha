@@ -31,6 +31,7 @@ interface SabhaNavbarProps {
   /** The active Sabha area. Defaults to the current route. */
   section?: "blogs" | "feed" | "projects";
   feedView?: "conversation" | "project" | "clans";
+  showClanCreateAction?: boolean;
   /** Contextual action for areas that provide one. */
   action?: { label: string; href: string };
 }
@@ -62,6 +63,7 @@ export default function SabhaNavbar({
   searchPath,
   section: requestedSection,
   feedView = "conversation",
+  showClanCreateAction = true,
   action,
 }: SabhaNavbarProps) {
   const router = useRouter();
@@ -227,17 +229,9 @@ export default function SabhaNavbar({
     ? { label: "Post", href: "/blogs/new" }
     : section === "feed"
       ? feedView === "clans"
-        ? { label: "Create Clan", href: "/feed/clans/new" }
+        ? showClanCreateAction ? { label: "Create Clan", href: "/feed/clans/new" } : undefined
         : { label: "Post", href: feedView === "project" ? "/feed/new?type=project" : "/feed/new?type=conversation" }
       : undefined);
-  const changeFeedView = (view: "conversation" | "project" | "clans") => {
-    const params = new URLSearchParams(window.location.search);
-    if (value.trim()) params.set("q", value.trim());
-    else params.delete("q");
-    params.set("view", view);
-    router.push(`/feed?${params.toString()}`, { scroll: false });
-  };
-
   /*
     Returned as a fragment on purpose: the gray brand bar scrolls away with
     the page, while the white bar is `sticky` relative to the page container
@@ -291,20 +285,6 @@ export default function SabhaNavbar({
               className={inputClass}
             />
           </div>
-
-          {section === "feed" && pathname === "/feed" && (
-            <div className="sabha-feed-mode" role="group" aria-label="Feed post type">
-              <button type="button" onClick={() => changeFeedView("conversation")} aria-pressed={feedView === "conversation"}>
-                Conversations
-              </button>
-              <button type="button" onClick={() => changeFeedView("project")} aria-pressed={feedView === "project"}>
-                Project
-              </button>
-              <button type="button" onClick={() => changeFeedView("clans")} aria-pressed={feedView === "clans"}>
-                Clans
-              </button>
-            </div>
-          )}
 
           {/* Links */}
           <div className="sabha-nav-links">

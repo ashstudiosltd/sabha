@@ -44,19 +44,23 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           username: "member",
           avatarUrl: null,
         };
+    const allClans = [...(clansResult.data ?? []), ...(privateClansResult.data ?? [])] as ClanSummary[];
+    const hasAnyClans = allClans.length > 0;
     const needle = query.toLowerCase();
-    const clans = ([...(clansResult.data ?? []), ...(privateClansResult.data ?? [])] as ClanSummary[]).filter((clan) =>
+    const clans = allClans.filter((clan) =>
       !needle || `${clan.name} ${clan.description}`.toLowerCase().includes(needle)
     );
     const setupRequired = !!clansResult.error || !!privateClansResult.error || !!membershipsResult.error;
 
     return (
       <main className="sabha-design min-h-screen">
-        <SabhaNavbar section="feed" feedView="clans" initialQuery={query} />
+        <SabhaNavbar section="feed" feedView="clans" showClanCreateAction={hasAnyClans} initialQuery={query} />
         <ClanDirectory
           clans={clans}
+          hasAnyClans={hasAnyClans}
           memberClanIds={(membershipsResult.data ?? []).map((membership) => membership.clan_id)}
           currentUserId={currentProfile.id}
+          query={query}
           loadError={setupRequired}
         />
       </main>
@@ -75,6 +79,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       .is("clan_id", null)
       .eq("post_type", view)
       .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(50),
   ]);
 
@@ -153,6 +158,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           currentProfile={currentProfile}
           activeView={view}
           initialPosts={posts}
+          initialHasMore={(postsResult.data?.length ?? 0) === 50}
+          initialCursor={postsResult.data?.length ? { createdAt: postsResult.data.at(-1)!.created_at, id: postsResult.data.at(-1)!.id } : null}
+          searchQuery={query}
           loadError={setupRequired ? "setup" : postsResult.error || repliesResult.error || commentsResult.error ? "load" : null}
         />
       </div>
