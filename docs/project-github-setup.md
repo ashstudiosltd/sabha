@@ -104,3 +104,9 @@ This remains a pilot-size worker: each call processes four connections and publi
 ### Verification performed
 
 Production build, TypeScript, and focused ESLint passed. An isolated PGlite database with minimal identity/project fixtures exercised migration reruns, current-owner enforcement, stale replacement/disconnection, client table denial, draft/private/public summary rules, duplicate delivery handling, atomic retry after simulated storage failure, snapshot invalidation, and owner disconnect. This did not use live Supabase data or GitHub credentials and does not replace real account/installation/webhook verification. No production migration, secret change, repository mutation, or deployment was performed.
+
+## Anu development context permissions
+
+In GitHub: Settings → Developer settings → GitHub Apps → Devvrats Projects → Permissions & events → Repository permissions. Set **Issues: Read-only** and **Pull requests: Read-only**, then save. Existing installations must approve the requested permission update (GitHub installation settings → Configure/Review request → Accept new permissions). Keep existing Contents read-only and Metadata read-only. No write access, extra webhook events, new keys, or SQL migrations are required for this read-on-demand feature.
+
+Anu requests a separate repository-restricted token for these permissions. If permission approval is missing, code reading and commit access continue with the existing contents token; Anu reports discussions as unavailable. Comments may contain sensitive data; common credential patterns are redacted, but detection is best effort. Existing project owner/team checks and connection rechecks apply before any development context is passed to Anu.

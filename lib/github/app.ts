@@ -12,7 +12,7 @@ export async function github<T>(path: string, token: string, options: RequestIni
  if (!response.ok) throw githubFailure(response.status, stage);
  return { data: response.status === 204 ? null as T : await response.json().catch(()=>{throw new GitHubError("invalid-json","GitHub returned an unreadable response. Try again shortly.",stage);}) as T, status: response.status };
 }
-export async function installationToken(id: number, repositoryId: number, signal?: AbortSignal) {
+export async function installationToken(id: number, repositoryId: number, signal?: AbortSignal, discussionRead = false) {
  const now = Math.floor(Date.now()/1000);
  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
  const body = `${encode({alg:"RS256",typ:"JWT"})}.${encode({iat:now-60,exp:now+540,iss:process.env.GITHUB_APP_CLIENT_ID?.trim() || process.env.GITHUB_APP_ID?.trim()})}`;
@@ -26,7 +26,7 @@ export async function installationToken(id: number, repositoryId: number, signal
   if (key.asymmetricKeyType !== "rsa") throw new Error();
   signature = createSign("RSA-SHA256").update(body).sign(key).toString("base64url");
  } catch { throw new GitHubError("private-key-format", "The GitHub private key in Vercel isn’t a complete RSA PEM key. Replace GITHUB_APP_PRIVATE_KEY with the full downloaded PEM contents, including BEGIN and END lines, then redeploy.", "app-signing"); }
- const {data} = await github<{token:string}>(`/app/installations/${id}/access_tokens`, `${body}.${signature}`, {method:"POST", signal, body:JSON.stringify({repository_ids:[repositoryId],permissions:{contents:"read",metadata:"read"}})});
+ const {data} = await github<{token:string}>(`/app/installations/${id}/access_tokens`, `${body}.${signature}`, {method:"POST", signal, body:JSON.stringify({repository_ids:[repositoryId],permissions: discussionRead ? {contents:"read",metadata:"read",issues:"read",pull_requests:"read"} : {contents:"read",metadata:"read"}})});
  return data.token;
 }
 export type Flow = { user: string; project: string; slug: string; state: string; verifier: string; expires: number; expectedConnection?:string|null; token?: string };

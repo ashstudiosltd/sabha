@@ -29,7 +29,7 @@ function turnId() {
 }
 function sourceValid(source: Source) {
  if(!source || typeof source.title!=="string" || typeof source.url!=="string")return false;
- try { const url=new URL(source.url);return url.protocol==="https:"&&!url.username&&!url.password&&((url.hostname==="sabha.devvrats.in"&&/^\/(?:blogs\/[a-zA-Z0-9-]+|projects\/[a-zA-Z0-9-]+|feed\/[a-zA-Z0-9-]+|feed\/clans\/[a-zA-Z0-9-]+|notifications)$/.test(url.pathname))||(url.hostname==="github.com"&&/^\/[^/]+\/[^/]+\/(?:tree|blob)\/[a-f0-9]{40}(?:\/.*)?$/i.test(url.pathname))); }catch{return false;}
+ try { const url=new URL(source.url);return url.protocol==="https:"&&!url.username&&!url.password&&((url.hostname==="sabha.devvrats.in"&&/^\/(?:blogs\/[a-zA-Z0-9-]+|projects\/[a-zA-Z0-9-]+|feed\/[a-zA-Z0-9-]+|feed\/clans\/[a-zA-Z0-9-]+|notifications)$/.test(url.pathname))||(url.hostname==="github.com"&&/^\/[^/]+\/[^/]+\/(?:(?:tree|blob)\/[a-f0-9]{40}(?:\/.*)?|commit\/[a-f0-9]{40}|(?:issues|pull)\/[1-9][0-9]*)$/i.test(url.pathname))); }catch{return false;}
 }
 function historyFor(messages: Message[]) {
   const history = messages.slice(-20).map(({ role, text }) => ({ role, text: text.slice(0, 4000) }));
