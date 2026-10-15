@@ -51,3 +51,11 @@ export async function getProjectTeam(id: string): Promise<ProjectTeamMember[]> {
   if (error) fail(error);
   return (data ?? []) as ProjectTeamMember[];
 }
+
+export async function projectProfiles(projects: Project[]) {
+ const ids=[...new Set(projects.map(p=>p.owner_id).filter((id):id is string=>!!id))];
+ if(!ids.length)return [];
+ const db=await createClient();const {data,error}=await db.from("profiles").select("id,name,username,avatar_url").in("id",ids);
+ if(error)return [];
+ return data as import("./types").ProjectProfile[];
+}

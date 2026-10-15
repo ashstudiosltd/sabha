@@ -1,9 +1,9 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createProject, getProjectBySlug, listProjects, ProjectDataError, saveProject } from "@/lib/projects/server";
+import { createProject, getProjectBySlug, listProjects, projectProfiles, ProjectDataError, saveProject } from "@/lib/projects/server";
 import { creationSlug, parseProjectInput, PROJECT_UUID, validVersion } from "@/lib/projects/validation";
-import type { Project, ProjectCursor } from "@/lib/projects/types";
+import type { Project, ProjectCursor, ProjectProfile } from "@/lib/projects/types";
 
 type Failure = { ok: false; error: string; code: string };
 type Saved = { ok: true; project: Project };
@@ -57,12 +57,12 @@ export async function changeProjectPublication(id: string, version: number, publ
     const project = data as Project; invalidate(project); return { ok: true, project };
   } catch (cause) { return failure(cause); }
 }
-export async function loadProjectPage(scope: "public" | "mine", cursor: ProjectCursor): Promise<{ ok: true; projects: Project[]; hasMore: boolean } | Failure> {
+export async function loadProjectPage(scope: "public" | "mine", cursor: ProjectCursor): Promise<{ ok: true; projects: Project[]; profiles:ProjectProfile[]; hasMore: boolean } | Failure> {
   try {
     if (scope !== "public" && scope !== "mine") throw new Error("Choose a project collection.");
     if (scope === "mine") await signedIn();
     if (!cursor || !PROJECT_UUID.test(cursor.id) || typeof cursor.createdAt !== "string" || Number.isNaN(Date.parse(cursor.createdAt))) throw new Error("Reload this project collection.");
     const rows = await listProjects({ scope, limit: 21, cursor });
-    return { ok: true, projects: rows.slice(0, 20), hasMore: rows.length > 20 };
+    return { ok: true, projects: rows.slice(0, 20),profiles:await projectProfiles(rows.slice(0,20)), hasMore: rows.length > 20 };
   } catch (cause) { return failure(cause); }
 }

@@ -10,6 +10,8 @@ import BackNavigation from "@/components/sabha/back-navigation";
 import NotificationCenter from "@/components/sabha/notification-center";
 
 interface SabhaNavbarProps {
+  backFallback?: {href:string;label:string};
+  signInHref?:string;
   /**
    * Controlled mode (e.g. the /blogs client page): pass BOTH `query` and
    * `onQueryChange`.
@@ -66,6 +68,8 @@ export default function SabhaNavbar({
   feedView = "conversation",
   showClanCreateAction = true,
   action,
+  backFallback,
+  signInHref="/app/auth",
 }: SabhaNavbarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -97,6 +101,12 @@ export default function SabhaNavbar({
     typeof query === "string" && typeof onQueryChange === "function";
   const [localQuery, setLocalQuery] = useState(initialQuery);
 
+  // Keep URL-driven search aligned when filters clear or browser navigation restores a query.
+  useEffect(() => {
+    if(isControlled)return;
+    const frame=requestAnimationFrame(()=>setLocalQuery(initialQuery));
+    return()=>cancelAnimationFrame(frame);
+  },[initialQuery,isControlled]);
   const value = isControlled ? (query as string) : localQuery;
   const setValue = (next: string) => {
     if (isControlled) onQueryChange!(next);
@@ -258,7 +268,7 @@ export default function SabhaNavbar({
               Sabha. 
             </span>
           </Link>
-          <BackNavigation />
+          <BackNavigation fallback={backFallback} />
         </div>
       </div>
 
@@ -329,7 +339,7 @@ export default function SabhaNavbar({
               </Link>
             )}
 
-            {profile && <NotificationCenter userId={profile.id} />}
+            {profile && <NotificationCenter userId={profile.id} area={section} />}
 
             {/* Profile / Account menu (works both logged in and logged out) */}
             <div ref={menuRef} className="sabha-nav-account">
@@ -418,7 +428,7 @@ export default function SabhaNavbar({
                     <div className="py-1">
                       <Link
                         role="menuitem"
-                        href="/app/auth"
+                        href={signInHref}
                         onClick={() => setMenuOpen(false)}
                         className={itemClass}
                       >

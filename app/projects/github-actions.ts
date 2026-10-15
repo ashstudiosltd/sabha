@@ -15,24 +15,24 @@ export async function connectGitHub(slug:string,repositoryId:number,installation
  try {
   if(!configured()||!Number.isSafeInteger(repositoryId)||!Number.isSafeInteger(installationId))throw new Error("GitHub setup is incomplete.");
   const {user,project}=await owner(slug);const jar=await cookies();const flow=unseal(jar.get(FLOW_COOKIE)?.value);
-  if(!flow?.token||flow.user!==user.id||flow.project!==project.id)throw new Error("GitHub authorization expired. Connect again.");
+  if(!flow?.token||flow.user!==user.id||flow.project!==project.id||flow.expectedConnection===undefined)throw new Error("GitHub authorization expired. Connect again.");
   const repo=(await repositories(flow.token)).find(r=>r.id===repositoryId&&r.installation===installationId);
   if(!repo)throw new Error("Select a repository you manage and that this GitHub App can access.");
-  const {data,error}=await admin().rpc("connect_project_github",{p_project_id:project.id,p_owner_id:user.id,p_installation_id:installationId,p_repository_id:repositoryId,p_full_name:repo.full_name,p_default_branch:repo.default_branch,p_private:repo.private});
-  if(error)throw new Error("The repository connection couldn’t be saved. Check the GitHub database setup.");
+  const {data,error}=await admin().rpc("connect_project_github_checked",{p_project_id:project.id,p_owner_id:user.id,p_expected_connection:flow.expectedConnection??null,p_installation_id:installationId,p_repository_id:repositoryId,p_full_name:repo.full_name,p_default_branch:repo.default_branch,p_private:repo.private});
+  if(error)throw new Error(error.code==="40001"?"This connection changed in another tab. Authorize again before replacing it.":"The repository connection couldn’t be saved. Check the GitHub database setup.");
   jar.delete(FLOW_COOKIE);
   try {await syncRepository({project_id:project.id,connection_id:data,installation_id:installationId,repository_id:repositoryId,full_name:repo.full_name,default_branch:repo.default_branch,sync_status:"pending",synced_at:null});}catch{/* Connection remains available for retry. */}
   revalidatePath(`/projects/${slug}`);return {ok:true as const};
  }catch(cause){return {ok:false as const,error:cause instanceof Error?cause.message:"GitHub connection failed."};}
 }
-export async function disconnectGitHub(slug:string) {
- try {const {project,db}=await owner(slug);const {error}=await db.rpc("disconnect_project_github",{p_project_id:project.id});if(error)throw new Error("The connection couldn’t be removed.");revalidatePath(`/projects/${slug}`);return {ok:true as const};}
+export async function disconnectGitHub(slug:string,connectionId:string) {
+ try {const {project,db}=await owner(slug);if(!/^[a-f0-9-]{36}$/i.test(connectionId))throw new Error("Reload the project before disconnecting.");const {error}=await db.rpc("disconnect_project_github_checked",{p_project_id:project.id,p_expected_connection:connectionId});if(error)throw new Error(error.code==="40001"?"This connection changed. Reload before disconnecting.":"The connection couldn’t be removed.");revalidatePath(`/projects/${slug}`);return {ok:true as const};}
  catch(cause){return {ok:false as const,error:cause instanceof Error?cause.message:"Disconnect failed."};}
 }
 export async function refreshGitHub(slug:string) {
  try {const {project}=await owner(slug);const {data,error}=await admin().from("project_github_connections").select("*").eq("project_id",project.id).single();if(error)throw new Error("Connect a repository first.");
- if(data.synced_at&&Date.now()-Date.parse(data.synced_at)<60000)throw new Error("Activity was just refreshed. Try again in a minute.");
- await syncRepository(data as Connection);revalidatePath(`/projects/${slug}`);return {ok:true as const};
+ if(data.synced_at&&Date.now()-Date.parse(data.synced_at)<60000)return {ok:true as const,message:"Activity is already up to date. You can refresh again in a minute."};
+ const result=await syncRepository(data as Connection);revalidatePath(`/projects/${slug}`);return {ok:true as const,message:result.state==="ready"?"Repository activity is up to date.":result.state==="pending"?"GitHub is preparing the graph. Refresh again shortly.":"A refresh is already running or was just attempted. Try again in a minute."};
  }catch(cause){const error=reportGitHubError(cause,"refresh");return {ok:false as const,error:cause instanceof GitHubError?error.message:"Activity couldn’t be refreshed yet. Wait a minute and try again."};}
 }
 // This action never returns commit details to public viewers, including on public repositories.
@@ -62,6 +62,11 @@ export async function memberCommits(slug:string,day?:string,page=1) {
  const rows=data??[];
  if(rows.some(c=>!c||typeof c.sha!=="string"||typeof c.commit?.message!=="string"||!Array.isArray(c.parents)))throw new GitHubError("commit-response","GitHub returned incomplete commit details. Please try again.","read-commits");
  const commits=rows.filter(c=>!day||c.parents.length<2).map(c=>({sha:c.sha,title:c.commit.message.split("\n")[0].slice(0,300),date:c.commit.committer?.date??c.commit.author?.date??null,author:c.commit.author?.name?.slice(0,100)??"Contributor",url:`https://github.com/${path}/commit/${encodeURIComponent(c.sha)}`}));
+ const latest=await getProjectBySlug(slug);
+ if(!latest)throw new GitHubError("project-access","Your project access changed. Reload the page.","recheck-access");
+ if(latest.owner_id!==user.id){const {data:membership,error:membershipError}=await db.from("project_members").select("profile_id").eq("project_id",project.id).eq("profile_id",user.id).maybeSingle();if(membershipError||!membership)throw new GitHubError("member-required","Your project membership changed. Reload the page.","recheck-access");}
+ const {data:latestConnection,error:connectionError}=await admin().from("project_github_connections").select("connection_id").eq("project_id",project.id).maybeSingle();
+ if(connectionError||latestConnection?.connection_id!==c.connection_id)throw new GitHubError("connection-changed","The connected repository changed. Reload before viewing its commits.","recheck-connection");
  return {ok:true as const,commits,hasMore:day?rows.length===50:false};
- }catch(cause){const error=reportGitHubError(cause,"member-commits");return {ok:false as const,error:cause instanceof GitHubError?error.message:"Commit activity couldn’t be loaded. Please check the server log entry tagged [project-github] for the failed step."};}
+ }catch(cause){const error=reportGitHubError(cause,"member-commits");return {ok:false as const,error:cause instanceof GitHubError?error.message:"Commit activity couldn’t be loaded. Please try again shortly."};}
 }

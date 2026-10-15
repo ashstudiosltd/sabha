@@ -82,3 +82,25 @@ No live GitHub authorization, repository writes, credential changes, or database
 - https://docs.github.com/en/rest/metrics/statistics
 - https://docs.github.com/en/rest/apps/installations
 - https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-user-access-token-for-a-github-app
+
+## Connection review hardening
+
+Apply `supabase/migrations/20261019_github_connection_safety.sql` before deploying the revised connection flow. Existing connections are preserved. `supabase/setup/check-github-connection-safety.sql` provides read-only installation checks.
+
+Changes:
+
+- OAuth captures the current connection identity and rechecks project ownership at callback and save. A checked database function locks the project and rejects replacement if another tab changed its connection. Disconnect has the same stale-connection guard.
+- GitHub cancellation/expiration returns to a useful project recovery page. The picker supports repository search and a review of branch, privacy, read-only access, and replacement effects. Private/team sharing and replacement require explicit confirmation in the interface.
+- Members see the connected repository and branch. Public viewers receive aggregates only. Commit actions recheck project access, membership, and connection identity after GitHub requests finish, reducing exposure from access changes during the request.
+- Webhook signatures are verified over raw bytes with a 25 MiB input limit. Payload shape and repository/installation/delivery IDs are validated. The delivery ID is recorded in the same transaction as snapshot invalidation. Duplicates do no repeated work; a storage failure rolls back the record so an operator can redeliver. The scheduler retains delivery IDs for seven days. GitHub does not automatically retry failed deliveries; use Recent deliveries to redeliver failed requests after recovery.
+- Refresh distinguishes ready, pending, and throttled states rather than reporting success when no refresh ran. Empty statistics responses become an empty ready state. Repository metadata and weekly data receive runtime shape checks before storage. Failed connections are included in scheduled recovery.
+
+### Free scheduler activation
+
+Enable Supabase Cron (`pg_cron`) and `pg_net`. In Supabase Vault, create `sabha_github_cron_secret` containing the exact production Vercel `CRON_SECRET` (at least 32 random characters). Never paste that value into chat. Then run `supabase/setup/schedule-github-reconciliation.sql`. It updates one named five-minute job and reads the authorization value from Vault at runtime. Its output contains only a job ID. Verify the HTTP response in addition to Cron History: a successful cron execution alone only confirms that pg_net queued the request.
+
+This remains a pilot-size worker: each call processes four connections and public snapshots expire after two hours without successful refresh. Monitor backlog and refresh age as repository count increases. No guarantee of immediate visibility revocation is possible if a webhook is missed; public snapshots have the documented maximum stale window. No repository content or commit messages are stored in the delivery table.
+
+### Verification performed
+
+Production build, TypeScript, and focused ESLint passed. An isolated PGlite database with minimal identity/project fixtures exercised migration reruns, current-owner enforcement, stale replacement/disconnection, client table denial, draft/private/public summary rules, duplicate delivery handling, atomic retry after simulated storage failure, snapshot invalidation, and owner disconnect. This did not use live Supabase data or GitHub credentials and does not replace real account/installation/webhook verification. No production migration, secret change, repository mutation, or deployment was performed.

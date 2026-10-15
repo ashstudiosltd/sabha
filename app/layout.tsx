@@ -1,3 +1,4 @@
+import SabhaAnuCompanion from "@/components/sabha/anu-companion";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Roboto } from "next/font/google";
 import "./globals.css";
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="relative text-white">
         <SabhaNavigationHistory />
         <ProjectsNavigation />
+        <SabhaAnuCompanion />
         {/* Gradient background only */}
         <div className="absolute inset-0 -z-10" />
         

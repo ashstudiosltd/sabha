@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { createClient } from "@/lib/supabase/client";
 import styles from "./anu-panel.module.css";
 import "./anu-orb.css";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { AnuReveal } from "./anu-summary";
-import { ArrowUp, X } from "lucide-react";
+import { ArrowUp, Trash2, X } from "lucide-react";
 
 type Source = { title: string; url: string };
 type Message = { role: "user" | "assistant"; text: string; sources?: Source[] };
@@ -20,6 +21,15 @@ function HoverText({ text }: { text: string }) {
   return <>{text.split(" ").map((word, index) => <span key={index}><span className={styles.hoverWord} style={{ "--word-delay": `${index * 16}ms` } as CSSProperties}>{word}</span>{" "}</span>)}</>;
 }
 
+function turnId() {
+  if(typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
+  const hex=Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+function sourceValid(source: Source) {
+ return source && typeof source.title === "string" && typeof source.url === "string" && /^https:\/\/sabha\.devvrats\.in\/(?:blogs\/[a-zA-Z0-9-]+|projects\/[a-zA-Z0-9-]+|feed\/[a-zA-Z0-9-]+|feed\/clans\/[a-zA-Z0-9-]+|notifications)$/.test(source.url);
+}
 function historyFor(messages: Message[]) {
   const history = messages.slice(-20).map(({ role, text }) => ({ role, text: text.slice(0, 4000) }));
   while (JSON.stringify(history).length > 24_000) history.shift();
@@ -28,8 +38,11 @@ function historyFor(messages: Message[]) {
   return history;
 }
 
-function AnuPanel({ onClose, onHeight }: { onClose: () => void; onHeight: (height: number) => void }) {
-  const key = "home";
+type Focus = { kind: string; id: string };
+type CompanionProps = { hidden?: boolean; area?: "blogs" | "feed" | "projects" | "clans"; focus?: Focus };
+function AnuPanel({ onClose, onHeight, userId, area, focus }: { onClose: () => void; onHeight: (height: number) => void; userId: string | null; area: string; focus?: Focus }) {
+  const key = focus ? `${focus.kind}:${focus.id}` : area;
+  const [notice, setNotice] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -68,25 +81,35 @@ function AnuPanel({ onClose, onHeight }: { onClose: () => void; onHeight: (heigh
   }, [input]);
 
   useEffect(() => {
-    try {
-      const all = JSON.parse(sessionStorage.getItem(STORAGE) || "{}");
-      const stored = all[key];
-      if (Array.isArray(stored)) setMessages(stored.filter((item): item is Message => item && ["user", "assistant"].includes(item.role) && typeof item.text === "string").slice(-20));
-    } catch { /* Session storage may be unavailable. */ }
-    setReady(true);
-    return () => { controller.current?.abort(); controller.current = null; };
-  }, [key]);
+    let active = true;
+    setReady(false);
+    if (userId) {
+      void fetch(`/api/anu/history?scope=${encodeURIComponent(key)}`, { cache: "no-store" }).then(async response => {
+        const data = await response.json();
+        if (!active) return;
+        if (!response.ok) { setNotice("Replies work now; account history will be available after setup."); return; }
+        setMessages((data.turns || []).flatMap((turn: {question: string; answer: string; sources: Source[]}): Message[] => [{role:"user",text:turn.question},{role:"assistant",text:turn.answer,sources:turn.sources}]).slice(-40));
+      }).catch(() => { if(active) setNotice("History couldn’t load. You can still talk to Anu."); }).finally(() => {if(active)setReady(true);});
+    } else {
+      try { const stored=JSON.parse(sessionStorage.getItem(STORAGE)||"{}")[key]; if(Array.isArray(stored))setMessages(stored.filter(item=>item&&["user","assistant"].includes(item.role)&&typeof item.text==="string").slice(-20)); } catch { /* Guest preview works without storage. */ }
+      setReady(true);
+    }
+    return () => { active=false; controller.current?.abort(); controller.current=null; };
+  }, [key, userId]);
 
   useEffect(() => {
-    if (!ready) return;
-    try {
-      const previous = JSON.parse(sessionStorage.getItem(STORAGE) || "{}");
-      const entries = Object.entries(previous && typeof previous === "object" && !Array.isArray(previous) ? previous : {}).filter(([id]) => id !== key).slice(-9);
-      entries.push([key, messages.slice(-20)]);
-      while (JSON.stringify(Object.fromEntries(entries)).length > 150_000 && entries.length > 1) entries.shift();
-      sessionStorage.setItem(STORAGE, JSON.stringify(Object.fromEntries(entries)));
-    } catch { /* Chat remains usable without storage. */ }
-  }, [key, messages, ready]);
+    if(!ready||userId)return;
+    try { sessionStorage.setItem(STORAGE,JSON.stringify({[key]:messages.slice(-20)})); } catch { /* Guest preview remains usable. */ }
+  }, [key,messages,ready,userId]);
+
+  async function clearHistory() {
+    if (sending.current) return;
+    if(userId){
+      try { const response=await fetch(`/api/anu/history?scope=${encodeURIComponent(key)}`,{method:"DELETE"});if(!response.ok)throw new Error(); }
+      catch { setError("The conversation couldn’t be cleared. Please try again.");return; }
+    }
+    setMessages([]);setError("");setNotice("");
+  }
 
   useEffect(() => {
     if (nearBottom.current) scroll.current?.scrollTo({ top: scroll.current.scrollHeight, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
@@ -102,14 +125,15 @@ function AnuPanel({ onClose, onHeight }: { onClose: () => void; onHeight: (heigh
     const abort = new AbortController(); controller.current = abort;
     const timeout = setTimeout(() => abort.abort(), 60_000);
     try {
-      const response = await fetch("/api/anu/blogs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: question, history: historyFor(previous), articleId: null }), signal: abort.signal });
+      const response = await fetch(userId ? "/api/anu/chat" : "/api/anu/blogs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(userId ? { message: question, focus, scope: key, turnId: turnId() } : { message: question, history: historyFor(previous), articleId: null }), signal: abort.signal });
       const data = await response.json();
       if (!response.ok || typeof data.reply !== "string") throw new Error(data.error || "Anu couldn't reply. Please try again.");
       if (controller.current !== abort) return;
       const knownSources = new Set(previous.flatMap((message) => message.sources || []).map((source) => source.url));
-      const sources = Array.isArray(data.sources) ? data.sources.filter((source: Source) => source && typeof source.title === "string" && typeof source.url === "string" && /^https:\/\/sabha\.devvrats\.in\/blogs\/[a-zA-Z0-9-]+$/.test(source.url) && !knownSources.has(source.url)) : [];
-      setFreshReply(Math.min(previous.length + 1, 19));
-      setMessages([...previous, { role: "user", text: question }, { role: "assistant", text: data.reply, sources }].slice(-20) as Message[]);
+      const sources = Array.isArray(data.sources) ? data.sources.filter((source: Source) => source && typeof source.title === "string" && typeof source.url === "string" && /^https:\/\/sabha\.devvrats\.in\/(?:blogs\/[a-zA-Z0-9-]+|projects\/[a-zA-Z0-9-]+|feed\/[a-zA-Z0-9-]+|feed\/clans\/[a-zA-Z0-9-]+|notifications)$/.test(source.url) && !knownSources.has(source.url)) : [];
+      if(userId && !data.historySaved)setNotice("This reply wasn’t saved to your account.");
+      setFreshReply(Math.min(previous.length + 1, 39));
+      setMessages([...previous, { role: "user", text: question }, { role: "assistant", text: data.reply, sources }].slice(userId ? -40 : -20) as Message[]);
     } catch (failure) {
       if (controller.current !== abort) return;
       setMessages(previous); setInput(question);
@@ -125,35 +149,45 @@ function AnuPanel({ onClose, onHeight }: { onClose: () => void; onHeight: (heigh
     const timer = setTimeout(() => setFreshReply(null), 1800);
     return () => clearTimeout(timer);
   }, [freshReply]);
-  const prompts = ["What's new in blogs?", "Find a story for me", "What is the community sharing?"];
-  return <section aria-label="Ask Anu about Sabha blogs" className={styles.panel}>
+  const prompts = area === "blogs" ? ["What's new in blogs?", "Find a story for me"] : area === "projects" ? ["Help me understand this project", "Find a project for me"] : area === "clans" ? ["Help me catch up in this Clan", "What could I contribute?"] : ["What is the community discussing?", "Help me find a conversation"];
+  return <section aria-label="Talk to Anu" className={styles.panel}>
     <div ref={header} className={styles.header}>
+      {!!messages.length && <button type="button" aria-label="Clear this conversation" title="Clear this conversation" disabled={busy} onClick={() => void clearHistory()} className={styles.iconButton}><Trash2 size={15}/></button>}
 
       <button type="button" aria-label="Close conversation" onClick={onClose} className={styles.iconButton}><X size={17} /></button>
     </div>
     <div ref={scroll} onScroll={() => { const el = scroll.current; if (el) nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }} className={styles.log} role="log" aria-label="Conversation with Anu" aria-live="polite" aria-busy={busy}>
       <div ref={content}>
-      {!messages.length && <div className={styles.welcome}><p className={styles.welcomeTitle}>Namastey, Devvrat.</p><p className={styles.welcomeText}>Want to know what’s new in blogs? Let’s find your next good read.</p></div>}
+      {!messages.length && <div className={styles.welcome}><p className={styles.welcomeTitle}>Namastey, Devvrat.</p><p className={styles.welcomeText}>{area === "blogs" ? "Let’s find your next good read." : area === "projects" ? "Let’s explore what you’re building." : "Let’s find your place in the conversation."}</p></div>}
       {messages.map((message, index) => {
-        const references = (message.sources || []).filter((source) => !messages.slice(0, index).some((earlier) => earlier.sources?.some((item) => item.url === source.url)));
+        const references = (message.sources || []).filter(sourceValid).filter((source) => !messages.slice(0, index).some((earlier) => earlier.sources?.some((item) => item.url === source.url)));
         return <div key={index} className={`${styles.message} ${message.role === "user" ? styles.user : styles.assistant}`}><div className={styles.bubble}>{message.role === "assistant" ? <AnuReveal text={message.text} animate={index === freshReply} /> : message.text}</div>
-        {!!references.length && <div className={styles.sources}>{references.map((source) => <a key={source.url} href={`/blogs/${source.url.split("/").pop()}`} className={styles.source} aria-label={`Reference: ${source.title}`}>Reference</a>)}</div>}
+        {!!references.length && <div className={styles.sources}>{references.map((source) => <a key={source.url} href={new URL(source.url).pathname} className={styles.source} aria-label={`Reference: ${source.title}`}>Reference</a>)}</div>}
       </div>; })}
-      {busy && <p role="status" className={styles.thinking}>Anu is reading the blogs…</p>}
+      {busy && <p role="status" className={styles.thinking}>Anu is thinking…</p>}
+      {notice && <p className={styles.thinking}>{notice}</p>}
       {error && <p role="alert" className={styles.error}>{error}</p>}
       </div>
     </div>
     <div ref={composer} className={styles.composer}>
       {!messages.length && <div className={styles.prompts}>{prompts.map((prompt) => <button type="button" key={prompt} disabled={busy || !ready} onClick={() => void send(prompt)} className={styles.prompt}>{prompt}</button>)}</div>}
       <form onSubmit={(event) => { event.preventDefault(); void send(input); }} className={styles.form}>
-        <textarea ref={textarea} aria-label="Message Blogs Anu" placeholder="What’s on your mind?" value={input} onChange={(event) => setInput(event.target.value)} maxLength={2000} rows={1} disabled={busy || !ready} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(input); } }} className={styles.input} />
+        <textarea ref={textarea} aria-label="Message Anu" placeholder="What’s on your mind?" value={input} onChange={(event) => setInput(event.target.value)} maxLength={2000} rows={1} disabled={busy || !ready} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(input); } }} className={styles.input} />
         <button type="submit" aria-label="Send to Anu" disabled={busy || !ready || !input.trim()} className={styles.send}><ArrowUp size={15} /></button>
       </form>
     </div>
   </section>;
 }
 
-export function BlogsAnuCompanion({ hidden = false }: { hidden?: boolean }) {
+export function BlogsAnuCompanion({ hidden = false, area = "blogs", focus }: CompanionProps) {
+  const [identity, setIdentity] = useState<{id:string|null;ready:boolean}>({id:null,ready:false});
+  useEffect(()=>{
+    let active=true;
+    const db=createClient();
+    void db.auth.getUser().then(({data:{user}})=>{if(active)setIdentity({id:user?.id||null,ready:true});}).catch(()=>{if(active)setIdentity({id:null,ready:true});});
+    const {data:{subscription}}=db.auth.onAuthStateChange((_event,session)=>{if(active)setIdentity({id:session?.user.id||null,ready:true});});
+    return ()=>{active=false;subscription.unsubscribe();};
+  },[]);
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -168,14 +202,14 @@ export function BlogsAnuCompanion({ hidden = false }: { hidden?: boolean }) {
     window.addEventListener("keydown", escape);
     return () => window.removeEventListener("keydown", escape);
   }, [open, hidden]);
-  if (hidden || !mounted) return null;
-  return createPortal(<MotionConfig reducedMotion="user"><div className={styles.companion} style={{ position: "fixed", zIndex: 45 }}>
+  if (hidden || !mounted || !identity.ready || (!identity.id && area !== "blogs")) return null;
+  return createPortal(<MotionConfig reducedMotion="user"><div className={`${styles.companion} ${area === "projects" ? styles.dark : ""}`} style={{ position: "fixed", zIndex: 45 }}>
     <AnimatePresence initial={false} onExitComplete={() => setClosing(false)}>
-      {open && <motion.div key="chat" initial={{ y: 6, scale: .99, height }} animate={{ y: 0, scale: 1, height }} exit={{ y: 4, scale: .99 }} transition={{ duration: .18, height: { duration: .28, ease: [.22, .61, .36, 1] }, ease: [.22, .61, .36, 1] }} className={styles.window} id="blogs-anu-conversation"><AnuPanel onClose={close} onHeight={resize} /></motion.div>}
+      {open && <motion.div key="chat" initial={{ y: 6, scale: .99, height }} animate={{ y: 0, scale: 1, height }} exit={{ y: 4, scale: .99 }} transition={{ duration: .18, height: { duration: .28, ease: [.22, .61, .36, 1] }, ease: [.22, .61, .36, 1] }} className={styles.window} id="blogs-anu-conversation"><AnuPanel key={`${identity.id || "guest"}:${area}:${focus?.id || "home"}`} userId={identity.id} area={area} focus={focus} onClose={close} onHeight={resize} /></motion.div>}
     </AnimatePresence>
     <div className={styles.launcher}>
-      {!open && !closing && <div className={styles.greeting} role="tooltip"><span className={styles.greetingTitle}><HoverText text="Namastey, Devvrat." /></span><p className={styles.greetingText}><HoverText text="Want to know what’s new in blogs?" /></p></div>}
-      <motion.button ref={launcher} type="button" aria-label={open ? "Close Blogs Anu" : "Open Blogs Anu"} aria-expanded={open} aria-controls={open ? "blogs-anu-conversation" : undefined} onClick={() => { if (open) close(); else { setClosing(false); setOpen(true); } }} whileHover={{ scale: 1.04 }} whileTap={{ scale: .97 }} transition={{ duration: .14 }} className={styles.launchButton}><LivingDot /></motion.button>
+      {!open && !closing && <div className={styles.greeting} role="tooltip"><span className={styles.greetingTitle}><HoverText text="Namastey, Devvrat." /></span><p className={styles.greetingText}><HoverText text={area === "blogs" ? "Want to know what’s new in blogs?" : area === "projects" ? "Want to explore your next step?" : "Want to catch up with your community?"} /></p></div>}
+      <motion.button ref={launcher} type="button" aria-label={open ? "Close Anu" : "Open Anu"} aria-expanded={open} aria-controls={open ? "blogs-anu-conversation" : undefined} onClick={() => { if (open) close(); else { setClosing(false); setOpen(true); } }} whileHover={{ scale: 1.04 }} whileTap={{ scale: .97 }} transition={{ duration: .14 }} className={styles.launchButton}><LivingDot /></motion.button>
     </div>
   </div></MotionConfig>, document.body);
 }

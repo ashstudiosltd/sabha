@@ -42,3 +42,6 @@ export interface ProjectMember {
 export interface ProjectCursor { createdAt: string; id: string }
 
 export interface ProjectTeamMember { profile_id: string; name: string | null; username: string | null; avatar_url: string | null; role: ProjectRole; joined_at: string }
+
+export interface ProjectProfile { id:string; name:string|null; username:string|null; avatar_url:string|null }
+export interface ProjectEvent { id:string; project_id:string; actor_id:string|null; event_type:string; changed_fields:string[]; created_at:string }

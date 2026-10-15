@@ -30,7 +30,7 @@ function iconFor(type: NotificationType) {
 }
 function safePath(path: string) { return path.startsWith("/") && !path.startsWith("//") && !path.includes("\\"); }
 
-export default function NotificationCenter({ userId, fullPage = false }: { userId: string; fullPage?: boolean }) {
+export default function NotificationCenter({ userId, fullPage = false, area="blogs" }: { userId: string; fullPage?: boolean; area?:"blogs"|"feed"|"projects" }) {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
   const [open, setOpen] = useState(fullPage);
@@ -163,7 +163,7 @@ export default function NotificationCenter({ userId, fullPage = false }: { userI
         {error && <div className={styles.error} role="alert">{error} <button type="button" className={styles.markRead} onClick={() => void loadItems()}>Retry</button></div>}
         {!loading && hasMore && <button type="button" className={styles.more} onClick={() => void loadItems(true)}>Load older updates</button>}
       </div>
-      {!fullPage && <Link href="/notifications" className={styles.more} onClick={() => setOpen(false)}>View all activity</Link>}
+      {!fullPage && <Link href={`/notifications?area=${area}`} className={styles.more} onClick={() => setOpen(false)}>View all activity</Link>}
     </section>}
   </div>;
 }

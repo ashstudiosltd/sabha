@@ -11,6 +11,7 @@ export async function middleware(
   request: NextRequest
 ) {
   if (["/api/github/webhook", "/api/github/reconcile"].includes(request.nextUrl.pathname)) return NextResponse.next();
+  if (request.nextUrl.pathname === "/api/anu/chat" || request.nextUrl.pathname === "/api/anu/history") return NextResponse.next();
   if (request.nextUrl.pathname === "/api/anu/blogs" || request.nextUrl.pathname === "/api/anu/blogs-context") return NextResponse.next();
   let response =
     NextResponse.next({
@@ -91,7 +92,7 @@ export async function middleware(
   const isPublicRoute =
   pathname === "/" ||
   pathname === "/projects" ||
-  (/^\/projects\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pathname) && !["/projects/new", "/projects/activity"].includes(pathname)) ||
+  (/^\/projects\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(pathname) && !["/projects/new", "/projects/activity", "/projects/workspace"].includes(pathname)) ||
   isSharedFeedPost ||
   pathname.startsWith("/blogs") ||
   pathname.startsWith("/profile") ||

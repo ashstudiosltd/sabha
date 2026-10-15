@@ -101,3 +101,25 @@ Isolated PostgreSQL checks covered migration reruns, real anon/authenticated rol
 - Server actions validate inputs and authentication before calling the database functions. No service-role credential is used.
 
 The production build and input validation checks passed. The local public discovery page rendered its empty state without a storage error. An authenticated live create/edit/publish walkthrough remains to be completed with a signed-in account. Team management, GitHub synchronization, archive/delete controls, and activity views are later steps.
+
+## Individual workspace interface
+
+The project URL supports `?tab=overview|development|activity|people|settings`; the base URL defaults to Overview. Existing `/edit` remains available. Settings uses the existing editor and version-aware owner lifecycle RPCs. People uses existing owner-authorized team functions; adding a username grants access immediately and is labeled accordingly. Transfer requires an existing member and project-name confirmation; deletion requires name confirmation. No lifecycle action deletes a GitHub repository.
+
+Project history and personal Activity use paginated, RLS-filtered audit records. Owners/maintainers can read detailed history. Other readers see accessible milestone dates and a link to repository activity. Personal Activity also shows recent update timestamps from the newest 20 accessible account projects; it is not a global feed. Public showcase cards use the same ProfileAvatar component as Blogs/Feed and batch-fetch owner profiles. Copying a private project link does not grant access.
+
+The workspace uses existing database functions; no new migration is required. TypeScript compilation passes. Live account lifecycle/team actions and visual behavior still need verification. GitHub synchronization and Clan-to-project membership remain subject to their existing setup; this interface does not grant Clan members access automatically.
+
+## Discovery and separate account surfaces
+
+Apply `20261018_project_catalog.sql` before deploying this interface. It adds two RLS-respecting read functions and indexes; it does not modify existing records, ownership, or visibility. `check-project-catalog.sql` inspects installation, not runtime authorization behavior.
+
+- `/projects`: public discovery only. Published/public/unarchived constraints are enforced in SQL in addition to caller RLS.
+- `/projects/workspace`: authenticated account projects, with status totals and server filters for drafts/published/archived plus owned/collaborating. Existing `?view=mine` links redirect here.
+- `/projects/activity?project=<slug>&kind=project|people`: project-focused audit history. Detailed history retains owner/maintainer access restrictions. Recent-project selection is limited to the latest 20; every workspace card links directly to its full project history.
+
+Search matches a case-insensitive phrase across names, taglines, descriptions, and technology names. Relevance prioritizes exact/prefix names, then name substrings, technology matches, tagline matches, and description matches. Other sorts use recent updates, creation time, or alphabetical names. No stars, popularity, recommendations, or artificial engagement are inferred. Search/filtering runs over the database collection before pagination. Cursor ordering uses score, time, name, and UUID; the client deduplicates results if concurrent changes move records. Live updates between page requests can change the collection.
+
+Technology filters match normalized complete technology names. Stage and workspace filters compose with search. Filter URLs are shareable and reset pagination. Account status totals describe the entire authorized workspace rather than only current search results. Browser copies remain available in the account workspace.
+
+The plain substring relevance implementation is intended for the current collection size; the new indexes support recent ordering and membership lookup. A larger corpus will need indexed full-text/trigram search based on actual query measurements. No live migration or privacy walkthrough was performed during this change.

@@ -1,4 +1,5 @@
 "use client";
+import ProjectSelect from "@/components/workspace/project-select";
 import { useLayoutEffect, useId, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { memberCommits } from "@/app/projects/github-actions";
@@ -67,7 +68,7 @@ export default function RepositoryActivityGraph({slug,days,interactive,today}:{s
  const active=visible.some(d=>d.date===focus)?focus:visible.at(-1)?.date;
  function show(element:HTMLButtonElement,date:string,count:number|null) {const cell=element.getBoundingClientRect();const box=root.current?.getBoundingClientRect();if(box)setTip({date,count,x:Math.min(Math.max(cell.left-box.left+cell.width/2,110),Math.max(110,box.width-110)),y:cell.top-box.top-8});}
  return <div className="dv-repository-graph" ref={root} onKeyDown={e=>{if(e.key==="Escape")setTip(null);}}>
-  <div className="dv-graph-toolbar"><p className="dv-note">{total.toLocaleString("en-US")} commits · {readable(stamp(start))} – {readable(stamp(finish))}</p>{interactive&&<label className="dv-period-label">Period<select className="dv-input dv-period-select" value={period} onChange={e=>{setPeriod(e.target.value);setPage(0);setTip(null);setFocus(null);}}><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="180">Last 180 days</option><option value="365">Last year</option>{years.map(y=><option key={y} value={`year:${y}`}>{y} · available history</option>)}</select></label>}</div>
+  <div className="dv-graph-toolbar"><p className="dv-note">{total.toLocaleString("en-US")} commits · {readable(stamp(start))} – {readable(stamp(finish))}</p>{interactive&&<label className="dv-period-label">Period<ProjectSelect aria-label="Period" className="dv-input dv-period-select" value={period} onValueChange={value=>{setPeriod(value);setPage(0);setTip(null);setFocus(null);}}><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="180">Last 180 days</option><option value="365">Last year</option>{years.map(y=><option key={y} value={`year:${y}`}>{y} · available history</option>)}</ProjectSelect></label>}</div>
   <ProjectViewTransition viewKey={`${start}:${finish}:${compact}`} maxWidth={columns*24+80} label="Repository activity calendar">
    <div className="dv-calendar" style={{gridTemplateColumns:`24px repeat(${bandColumns}, minmax(0, 1fr))`}} role={interactive?"group":"img"} aria-label={`${total} commits from ${stamp(start)} to ${stamp(finish)}`}>
     {months.map((m,i)=><span key={`${m.column}-${m.label}`} className="dv-calendar-month" style={{gridColumn:`${m.column%bandColumns+2} / span ${Math.max(1,Math.min((months[i+1]?.column??columns)-m.column,bandColumns-m.column%bandColumns))}`,gridRow:Math.floor(m.column/bandColumns)*9+1}}>{m.label.slice(0,3)}</span>)}

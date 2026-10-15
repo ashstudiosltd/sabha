@@ -17,6 +17,8 @@ export default function ProjectsNavigation() {
       const url = new URL(anchor.href, window.location.origin);
       const isProject = url.pathname === "/projects" || url.pathname.startsWith("/projects/") || url.pathname === "/sabha/projects" || url.pathname.startsWith("/sabha/projects/");
       if (url.origin !== window.location.origin || !isProject || url.href === window.location.href) return;
+      // Tab and collection changes stay within their current page without a full-screen loader.
+      if(url.pathname===window.location.pathname)return;
       event.preventDefault();
       startTransition(() => router.push(`${url.pathname}${url.search}${url.hash}`));
     };

@@ -1,0 +1,43 @@
+# Personal Anu: first integration
+
+## Implemented contract
+
+Authenticated same-origin POST `/api/anu/chat`:
+
+```json
+{"message":"Help me plan this project", "focus":{"kind":"project","id":"PROJECT_UUID"}}
+```
+
+Focus is optional and accepts project, blog, feed, clan, notification. IDs are permanent UUIDs, not slugs. Browser-supplied identity, context and history are not trusted or forwarded. Returns reply, source references `{id,kind,title,url}`, and focusUnavailable.
+
+Sabha verifies the user with Supabase getUser, retrieves context using that session's RLS, and sends a bounded snapshot to Anu `/api/integrations/sabha/chat`. Neither user tokens nor service-role credentials are sent. The matching ANU_INTEGRATION_SECRET must exist on both applications, including local development. Existing ANU_API_URL on Sabha determines the Anu server; production defaults to https://anu.devvrats.in. Deploy both applications before connecting UI.
+
+Sources are checked twice against the request's allowed source IDs. Links are constructed by Sabha, not supplied by the model. Only sources selected by the model are returned. Context, replies and notifications are never cached by these routes. Personal notifications explicitly filter recipient_id. Failed retrieval areas are reported to the model as unavailable, never interpreted as no activity.
+
+## Deliberate limits
+
+- Existing Blogs UI/public summaries are unchanged. This route is ready for a shared authenticated interface; it is not yet wired into that interface or the Anu standalone portal.
+- Search covers the latest 40 accessible records per content area and 15 notifications, plus an optional focused record. It is not exhaustive semantic search. Source excerpts are limited to 6,000 characters each and six records per request.
+- Requests use fresh context and no previous chat text. Persistent history and permission-aware memory are the next stage. Previously generated private answers must not be blindly replayed after permissions change.
+- No GitHub file ingestion, sheet provider, write tools, proactive suggestions, or durable memories yet. No schema changes needed for this foundation.
+- Limits in memory are per running process, not distributed quotas. Add shared quotas before broad public rollout.
+- Access is checked at retrieval time. Already displayed information cannot be withdrawn; requests already in flight may complete during a permission change.
+- Private excerpts are sent to the configured Gemini service through Anu. Provider data handling must be considered before enabling private retrieval in the product interface.
+
+## Next implementation
+
+Connect the shared contextual UI with focus IDs; add recipient-owned history storage and RLS; implement history retrieval that excludes inaccessible source material; add account-owned memory management; then repository technology context using existing project/GitHub membership checks. Keep public blog previews on their restricted path.
+
+## Verification
+
+No live requests, database changes, build or test commands were run for this implementation. Review in local development before deployment.
+
+## Shared interface and history (second increment)
+
+The existing Blogs orb is reused on Feed, Clan pages, and Projects. Signed-in Blogs chat now uses the personal endpoint; public summaries and anonymous Blogs chat retain their restricted paths. A focused Project/Clan is resolved under browser RLS; the server rechecks the permanent ID. Projects uses dark companion styling. Creation/settings/auth pages do not display the added companion.
+
+Apply `supabase/migrations/20261020_anu_history.sql` in Sabha's Supabase SQL Editor. It creates account-owned turns with select/insert/delete RLS and no anonymous grants. Conversation scopes separate each project or clan from general Blogs/Feed/Projects chats. The latest 20 turns are restored and can be cleared with the trash action. History failures do not prevent a reply; the interface reports unsaved replies. Signed-in history is not stored in sessionStorage. No user-facing consent prompt added.
+
+Before restoring an answer, all context source IDs are batch-checked under current RLS. Answers involving an unavailable source are omitted. Up to four recent turns are replayed only when all their source IDs occur in the freshly retrieved context, with a 12,000-character budget. This deliberately limited recall may omit previous turns when the topic or source selection changes. Long-term preference memory is not implemented. The standalone Anu portal history is not connected to this table yet.
+
+No migration has been executed remotely and no deployment, build, or tests were run in this increment.
