@@ -36,13 +36,17 @@ interface BackNavigationProps { fallback?: BackDestination; className?: string }
 function BackNavigationLink({ fallback, className = "" }: BackNavigationProps) {
   const pathname = usePathname();
   const search = useSearchParams().toString();
-  const [resolved, setResolved] = useState<BackDestination | null>(null);
+  const routeKey = `${pathname}?${search}`;
+  const [resolved, setResolved] = useState<{key:string;destination:BackDestination} | null>(null);
   const base = fallback ?? backDestination(pathname, search);
+  const fallbackHref = fallback?.href;
+  const fallbackLabel = fallback?.label;
   useEffect(() => {
-    const frame = requestAnimationFrame(() => setResolved(resolveBackDestination(pathname, search, readVisited(), fallback)));
+    const parent = fallbackHref && fallbackLabel ? { href:fallbackHref, label:fallbackLabel } : undefined;
+    const frame = requestAnimationFrame(() => setResolved({key:routeKey,destination:resolveBackDestination(pathname, search, readVisited(), parent)}));
     return () => cancelAnimationFrame(frame);
-  }, [pathname, search, fallback]);
-  const destination = resolved ?? base;
+  }, [pathname, search, routeKey, fallbackHref, fallbackLabel]);
+  const destination = resolved?.key === routeKey ? resolved.destination : base;
   return <Link href={destination.href} className={`sabha-back-link ${className}`}><ArrowLeft size={15} aria-hidden="true" /><span>{destination.label}</span></Link>;
 }
 

@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useLayoutEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Activity, Compass, LayoutGrid } from "lucide-react";
@@ -11,6 +11,13 @@ const UserContext = createContext<{ user: WorkspaceUser | null; loading: boolean
 export function useWorkspaceUser() { return useContext(UserContext); }
 
 export default function WorkspaceShell({ children }: { children: React.ReactNode }) {
+  const navbar = useRef<HTMLDivElement>(null);
+  const shell = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const element=navbar.current;if(!element)return;
+    const update=()=>shell.current?.style.setProperty("--dv-nav-offset",`${Math.ceil(element.getBoundingClientRect().height)}px`);
+    const observer=new ResizeObserver(update);observer.observe(element);update();return()=>observer.disconnect();
+  },[]);
   const pathname = usePathname();
   const search = useSearchParams();
   const [identity, setIdentity] = useState<{ user: WorkspaceUser | null; loading: boolean }>({ user: null, loading: true });
@@ -35,9 +42,9 @@ export default function WorkspaceShell({ children }: { children: React.ReactNode
     { href: "/projects/workspace", label: "Your workspace", icon: LayoutGrid, active: mine || pathname === "/projects/new" },
     { href: "/projects/activity", label: "Your activity", icon: Activity, active: pathname === "/projects/activity" },
   ];
-  return <UserContext.Provider value={identity}><div className="dv-workspace">
+  return <UserContext.Provider value={identity}><div ref={shell} className="dv-workspace">
     <a href="#project-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-black focus:p-4">Skip to Projects content</a>
-    <div className="sabha-design dv-project-navbar"><SabhaNavbar key={pathname} section="projects" initialQuery={search.get("q")??""} searchPath={mine?"/projects/workspace":"/projects"} placeholder={mine?"Search your projects":"Search community projects"} action={{label:"New project",href:"/projects/new"}} signInHref={`/auth?next=${encodeURIComponent(pathname+(search.toString()?`?${search}`:""))}`} backFallback={
+    <div ref={navbar} className="sabha-design dv-project-navbar"><SabhaNavbar key={pathname} section="projects" initialQuery={search.get("q")??""} searchPath={mine?"/projects/workspace":"/projects"} placeholder={mine?"Search your projects":"Search community projects"} action={{label:"New project",href:"/projects/new"}} signInHref={`/auth?next=${encodeURIComponent(pathname+(search.toString()?`?${search}`:""))}`} backFallback={
       pathname.endsWith("/github")?{href:pathname.slice(0,-7)+"?tab=development",label:"Back to Development"}:
       pathname.endsWith("/edit")?{href:pathname.slice(0,-5),label:"Back to project"}:
       pathname==="/projects/new"?{href:"/projects/workspace",label:"Back to workspace"}:
