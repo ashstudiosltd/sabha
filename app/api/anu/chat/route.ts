@@ -46,9 +46,27 @@ export async function POST(request: Request) {
     if (base.username || base.password || base.search || base.hash || base.pathname !== "/" || (base.protocol !== "https:" && !(local && base.protocol === "http:"))) return json({ error: "Anu is temporarily unavailable." }, 503);
     const secret = process.env.ANU_INTEGRATION_SECRET;
     if (!secret) return json({ error: "Anu’s personal connection is being configured." }, 503);
-    const response = await fetch(new URL("/api/integrations/sabha/chat", base), { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json", "x-anu-integration-key": secret }, body: JSON.stringify({ message: body.message.trim(), memberName: profile?.name || profile?.username || null, context, history }), signal: AbortSignal.timeout(55_000) });
+    const response = await fetch(new URL("/api/integrations/sabha/chat", base), { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json", "x-anu-integration-key": secret }, body: JSON.stringify({ message: body.message.trim(), memberName: profile?.name || profile?.username || null, context, history }), signal: AbortSignal.timeout(55_000), redirect: "error" });
     const result = await response.json().catch(() => null);
-    if (!response.ok || typeof result?.reply !== "string") return json({ error: "Anu couldn’t reply just now. Please try again." }, response.status === 429 ? 429 : 503);
+    if (!response.ok || typeof result?.reply !== "string") {
+      console.warn("[sabha-anu] upstream rejected", { status: response.status, json: !!result });
+      const messages: Record<number, string> = {
+        401: "Sabha and Anu’s connection secrets do not match, or Anu’s secret is missing.",
+        403: "Anu’s deployment blocked the connection. Check its deployment access settings.",
+        404: "Anu’s personal connection is missing from the deployed app. Deploy the updated Anu app.",
+        429: "Anu is busy. Please try again in a moment.",
+        504: "Anu’s reply took too long. Please try again.",
+      };
+      // Only known service messages are safe to show; never forward arbitrary upstream bodies.
+      const safeErrors = new Set([
+        "Anu’s reply system isn’t connected yet. This private preview is ready for its Gemini connection.",
+        "Anu couldn't reach her reply service. Please try again in a moment.",
+        "Anu couldn’t format her reply. Please try again.",
+        "Anu couldn’t format her reply.",
+      ]);
+      const error = messages[response.status] || (safeErrors.has(result?.error) ? result.error : "Anu couldn’t reply just now. Please try again.");
+      return json({ error }, response.status === 429 ? 429 : 503);
+    }
     const allowed = new Map(context.sources.map(source => [`${source.kind}:${source.id}`, source]));
     const ids: unknown[] = Array.isArray(result.referenceIds) ? result.referenceIds : [];
     const sources = [...new Set(ids.filter((id): id is string => typeof id === "string"))].flatMap(id => { const s = allowed.get(id); return s ? [{ id: s.id, kind: s.kind, title: s.title, url: s.url }] : []; });
@@ -58,5 +76,5 @@ export async function POST(request: Request) {
       historySaved = !error;
     }
     return json({ reply: result.reply, sources, historySaved, focusUnavailable: context.focusUnavailable });
-  } catch { return json({ error: "Anu couldn’t connect just now. Please try again." }, 503); }
+  } catch (error) { console.warn("[sabha-anu] connection failed", { kind: error instanceof Error ? error.name : "UnknownError" }); return json({ error: "Anu couldn’t connect just now. Please try again." }, 503); }
 }
