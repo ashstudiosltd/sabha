@@ -5,7 +5,7 @@ export class GitHubError extends Error {
 }
 export function reportGitHubError(cause: unknown, fallbackStage: string) {
  const error = cause instanceof GitHubError ? cause : new GitHubError("unexpected", "GitHub couldn’t be reached. Try again shortly.", fallbackStage);
- console.error("[project-github]", { code: error.code, stage: error.stage, status: error.status ?? null });
+ console.error("[project-github]", { code: error.code, stage: error.stage, status: error.status ?? null, kind: cause instanceof TypeError ? "TypeError" : cause instanceof RangeError ? "RangeError" : cause instanceof SyntaxError ? "SyntaxError" : cause instanceof GitHubError ? "GitHubError" : "Error" });
  return error;
 }
 export function githubFailure(status: number, stage: string): GitHubError {

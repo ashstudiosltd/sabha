@@ -24,5 +24,5 @@ export default function ProjectsNavigation() {
     return () => document.removeEventListener("click", navigate, true);
   }, [router]);
   if (!pending) return null;
-  return <div className="dv-workspace dv-navigation-overlay" role="status" aria-live="polite"><div className="dv-loader"><span className="dv-loader-symbol"><FolderCode size={32} /></span><span>Opening Projects</span></div></div>;
+  return <div className="dv-workspace dv-navigation-overlay" role="status" aria-live="polite"><div className="dv-loader"><span className="dv-loader-symbol"><FolderCode size={32} /></span><span className="dv-pending-fade">Opening Projects</span></div></div>;
 }
