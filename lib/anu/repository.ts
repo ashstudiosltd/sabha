@@ -1,6 +1,7 @@
 import "server-only";
 import { admin, github, installationToken } from "@/lib/github/app";
 import type { createClient } from "@/lib/supabase/server";
+import { questionTerms, seedScore, readAliases, codeConnections, excerpt, type CodeFile, type CodeEdge } from "./code-map";
 import type { AnuSource } from "./context";
 type DB = Awaited<ReturnType<typeof createClient>>;
 type Entry = { path: string; type: string; sha: string; size?: number };
@@ -38,29 +39,52 @@ export async function repositoryContext(db: DB,userId:string,projectId:string,me
   if(!/^[a-f0-9]{40}$/i.test(commit.sha)||!/^[a-f0-9]{40}$/i.test(commit.commit.tree.sha))throw new Error("Invalid GitHub snapshot");
   const {data:tree}=await github<{tree:Entry[];truncated:boolean}>(`/repos/${repoPath}/git/trees/${commit.commit.tree.sha}?recursive=1`,token,{signal});
   const entries=tree.tree.filter(e=>e.type==="blob"&&readable(e.path)&&typeof e.size==="number"&&e.size<=100_000);
-  const terms=[...new Set(message.toLowerCase().match(/[a-z0-9_-]{3,}/g)||[])].filter(t=>!["the","this","project","help","understand","summary","give","what"].includes(t)).slice(0,15);
-  const priority=(e:Entry)=>{
-   const name=e.path.toLowerCase();
-   return (/^readme\.md$/i.test(name)?30:0)+(/(?:^|\/)(?:package\.json|pyproject\.toml|Cargo\.toml|go\.mod)$/i.test(name)?25:0)+(/(?:^|\/)(?:page|layout|main|app|index|server)\.(?:tsx?|jsx?|py|go|rs)$/.test(name)?8:0)+terms.reduce((n,t)=>n+(name.includes(t)?15:0),0);
-  };
-  const chosen=[...entries].sort((a,b)=>priority(b)-priority(a)||a.path.localeCompare(b.path)).slice(0,5);
-  const files=await Promise.all(chosen.map(async entry=>{
+  const terms=questionTerms(message);
+  const paths=new Set(entries.map(entry=>entry.path));
+  const byPath=new Map(entries.map(entry=>[entry.path,entry]));
+  const loaded=new Map<string,CodeFile>();
+  const failed:string[]=[];
+  const read=async(entry:Entry)=>{
    try {
     const {data:blob}=await github<{encoding:string;content:string;size:number}>(`/repos/${repoPath}/git/blobs/${entry.sha}`,token,{signal});
-    if(blob.encoding!=="base64"||blob.size>100_000)return null;
-    const bytes=Buffer.from(blob.content,"base64");if(bytes.includes(0))return null;
-    const text=redact(bytes.toString("utf8"));const excerpt=text.slice(0,2000);
-    return {path:entry.path,url:`https://github.com/${repoPath}/blob/${commit.sha}/${entry.path.split("/").map(encodeURIComponent).join("/")}`,content:excerpt,truncated:text.length>excerpt.length};
-   }catch{return null;}
-  }));
+    if(blob.encoding!=="base64"||blob.size>100_000)throw new Error("Unsupported blob");
+    const bytes=Buffer.from(blob.content,"base64");if(bytes.includes(0))throw new Error("Binary blob");
+    loaded.set(entry.path,{path:entry.path,text:redact(bytes.toString("utf8"))});
+   }catch{failed.push(entry.path);}
+  };
+  const ranked=[...entries].sort((a,b)=>seedScore(b.path,terms)-seedScore(a.path,terms)||a.path.localeCompare(b.path));
+  const initial=ranked.slice(0,4);
+  const config=byPath.get("tsconfig.json");
+  if(config&&!initial.some(e=>e.path===config.path))initial.push(config);
+  await Promise.all(initial.map(read));
+  const aliases=readAliases(loaded.get("tsconfig.json")?.text||"");
+  const edges:CodeEdge[]=[];
+  const unresolved:Array<{from:string;specifier:string}>=[];
+  const scanned=new Set<string>();
+  for(let depth=0;depth<2;depth++){
+   const candidates=new Set<string>();
+   for(const file of loaded.values()){
+    if(scanned.has(file.path))continue;scanned.add(file.path);
+    const links=codeConnections(file,paths,aliases);edges.push(...links.edges);
+    unresolved.push(...links.unresolved.map(specifier=>({from:file.path,specifier})));
+    for(const edge of links.edges)if(!loaded.has(edge.to)&&!failed.includes(edge.to))candidates.add(edge.to);
+   }
+   const next=[...candidates].sort((a,b)=>seedScore(b,terms)-seedScore(a,terms)||a.localeCompare(b)).slice(0,Math.max(0,10-loaded.size-failed.length));
+   if(!next.length)break;
+   await Promise.all(next.map(path=>read(byPath.get(path)!)));
+  }
+  const files=[...loaded.values()].map(file=>({path:file.path,url:`https://github.com/${repoPath}/blob/${commit.sha}/${file.path.split("/").map(encodeURIComponent).join("/")}`,...excerpt(file,terms)}));
   // Fence disconnect/replacement and permissions changing while GitHub requests run.
   if(!await repositoryMember(db,projectId,userId))return {status:"Repository access changed during this request."};
   const latest=await service.from("project_github_connections").select("connection_id").eq("project_id",projectId).maybeSingle();
   if(latest.error||latest.data?.connection_id!==c.connection_id)return {status:"The connected repository changed during this request."};
-  const inspected=files.filter(f=>!!f);
-  const payload={repository:repo.full_name,branch:repo.default_branch,commit:commit.sha,coverage:{treeTruncated:tree.truncated,eligibleFiles:entries.length,inspectedFiles:inspected.length,excluded:"Sensitive paths, binaries, generated output, files over 100 KB. Credential detection is best effort, not a guarantee.",limits:"Up to five file excerpts of 2,000 characters; this is not a complete audit. Unread code and runtime behaviour remain unknown."},map:entries.slice(0,40).map(e=>e.path.slice(0,120)),files:inspected};
+  const inspected=files;
+  const payload={repository:repo.full_name,branch:repo.default_branch,commit:commit.sha,coverage:{treeTruncated:tree.truncated,eligibleFiles:entries.length,inspectedFiles:inspected.length,excluded:"Sensitive paths, binaries, generated output, files over 100 KB. Credential detection is best effort, not a guarantee.",limits:"Up to ten files, two import/API traversal rounds, selected line-numbered excerpts of 1,600 characters. JS/TS local imports and static fetch routes only. Dynamic imports/paths, external services, JSONC aliases and other languages may remain unresolved. No code execution."},map:ranked.slice(0,40).map(e=>e.path.slice(0,120)),connections:edges.slice(0,50),unresolved:unresolved.slice(0,20),failedFiles:failed,files:inspected};
+  while(JSON.stringify(payload).length>23000 && payload.connections.length>10) payload.connections.pop();
+  while(JSON.stringify(payload).length>23000 && payload.unresolved.length) payload.unresolved.pop();
+  while(JSON.stringify(payload).length>23000 && payload.map.length>10) payload.map.pop();
   while(JSON.stringify(payload).length>23000 && payload.files.length) payload.files.pop();
   payload.coverage.inspectedFiles=payload.files.length;
-  return {status:"Retrieved a commit-pinned repository map and relevant file excerpts.",source:{id:projectId,kind:"repository",title:`${repo.full_name} · inspected code`,url:`https://github.com/${repoPath}/tree/${commit.sha}`,text:JSON.stringify(payload)}};
+  return {status:"Retrieved a commit-pinned repository map and relevant file excerpts.",source:{id:projectId,kind:"repository",title:`${repo.full_name} · inspected code`,url:`https://github.com/${repoPath}/tree/${commit.sha}`,text:JSON.stringify(payload),references:payload.files.map(file=>({title:file.path,url:file.url}))}};
  }catch(error){console.warn("[anu-repository] retrieval failed",{kind:error instanceof Error?error.name:"UnknownError"});return {status:"Repository code could not be retrieved. Do not infer its contents."};}
 }

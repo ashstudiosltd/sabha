@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     }
     const allowed = new Map(context.sources.map(source => [`${source.kind}:${source.id}`, source]));
     const ids: unknown[] = Array.isArray(result.referenceIds) ? result.referenceIds : [];
-    const sources = [...new Set(ids.filter((id): id is string => typeof id === "string"))].flatMap(id => { const s = allowed.get(id); return s ? [{ id: s.id, kind: s.kind, title: s.title, url: s.url }] : []; });
+    const sources = [...new Set(ids.filter((id): id is string => typeof id === "string"))].flatMap(id => { const s = allowed.get(id); return s ? [{ id: s.id, kind: s.kind, title: s.title, url: s.url }, ...(s.references || []).slice(0,5).map(ref => ({ id:s.id,kind:s.kind,title:ref.title,url:ref.url }))] : []; }).slice(0,6);
     let historySaved = false;
     if (body.turnId && body.scope) {
       const { error } = await db.from("anu_conversation_turns").insert({ id: body.turnId, user_id: user.id, scope: body.scope, question: body.message.trim(), answer: result.reply, sources, context_sources: context.sources.map(({ id, kind }) => ({ id, kind })) });

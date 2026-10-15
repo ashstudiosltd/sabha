@@ -1,7 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 
-export type AnuSource = { id: string; kind: string; title: string; url: string; text: string };
+export type AnuSource = { id: string; kind: string; title: string; url: string; text: string; references?: Array<{title:string;url:string}> };
 export const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Every query uses the request's session and RLS, never service credentials. */
 export async function retrieveContext(db: Awaited<ReturnType<typeof createClient>>, userId: string, message: string, focus?: { kind: string; id: string }) {
