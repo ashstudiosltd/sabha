@@ -1,3 +1,4 @@
+import ProjectAttachment,{ProjectReferences} from "@/components/project-references/project-attachment";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -84,7 +85,7 @@ export default async function SharedFeedPage({ params }: SharedFeedPageProps) {
           <h1>{displayTitle(post)}</h1>
           <p className={styles.body}>{post.body}</p>
 
-          {post.resource_url && post.resource_label && (
+          {post.resource_url && post.resource_kind === "project" ? <ProjectReferences references={[post.resource_url]}><ProjectAttachment reference={post.resource_url}/></ProjectReferences> : post.resource_url && post.resource_label && (
             <a className={styles.reference} href={post.resource_url} target={post.resource_url.startsWith("/") ? undefined : "_blank"} rel={post.resource_url.startsWith("/") ? undefined : "noreferrer"}>
               <span><small>{post.resource_kind ?? "Reference"}</small><strong>{post.resource_label}</strong></span>
               <span aria-hidden="true">↗</span>

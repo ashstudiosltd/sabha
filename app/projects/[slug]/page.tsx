@@ -1,3 +1,6 @@
+import type {Metadata} from "next";
+import {publicProject} from "@/lib/project-references/public";
+import ProjectShare from "@/components/project-references/project-share";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FolderCode, Code2, Activity, Users, Settings, LayoutDashboard } from "lucide-react";
@@ -11,12 +14,18 @@ import ProjectTimeline from "@/components/workspace/project-timeline";
 import { projectEventPage } from "../workspace-actions";
 export const dynamic = "force-dynamic";
 const tabs=[{id:"overview",label:"Overview",icon:LayoutDashboard},{id:"development",label:"Development",icon:Code2},{id:"activity",label:"Activity",icon:Activity},{id:"people",label:"People",icon:Users},{id:"settings",label:"Settings",icon:Settings}];
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
+ const {slug}=await params;const project=await publicProject(slug);
+ if(!project)return {title:"Project",description:"Explore projects on Devvrats.",robots:{index:false,follow:false},openGraph:{title:"Devvrats Projects",description:"A project on Devvrats."},twitter:{card:"summary",title:"Devvrats Projects"}};
+ const url=`https://sabha.devvrats.in/projects/${project.id}`;
+ return {title:project.name,description:project.tagline||"A project built with the Devvrats community.",alternates:{canonical:url},openGraph:{type:"website",url,title:project.name,description:project.tagline||"A project built with the Devvrats community."},twitter:{card:"summary_large_image",title:project.name,description:project.tagline||"A project on Devvrats."}};
+}
 export default async function ProjectPage({ params,searchParams }: { params: Promise<{ slug: string }>;searchParams:Promise<{tab?:string}> }) {
  const [{slug},{tab:requested}]=await Promise.all([params,searchParams]);const tab=tabs.some(t=>t.id===requested)?requested:"overview";
  const project=await getProjectBySlug(slug);if(!project)notFound();
  const db=await createClient();const [{data:{user}},team]=await Promise.all([db.auth.getUser(),getProjectTeam(project.id)]);
  const role=project.owner_id===user?.id?"owner":team.find(m=>m.profile_id===user?.id)?.role;const owner=role==="owner";const canEdit=owner||role==="maintainer";
- return <><header className="dv-page-intro"><div><p className="dv-eyebrow">Devvrats / Project</p><h1>{project.name}</h1>{project.tagline&&<p>{project.tagline}</p>}</div><div className="dv-project-actions">{owner&&<ProjectPublication key={project.version} project={project}/>}</div></header>
+ return <><header className="dv-page-intro"><div><p className="dv-eyebrow">Devvrats / Project</p><h1>{project.name}</h1>{project.tagline&&<p>{project.tagline}</p>}</div><div className="dv-project-actions"><ProjectShare id={project.id} name={project.visibility === "public" && project.publication_status === "published" && !project.archived_at ? project.name : null}/>{owner&&<ProjectPublication key={project.version} project={project}/>}</div></header>
  <nav className="dv-workspace-tabs" aria-label="Project workspace">{tabs.map(({id,label,icon:Icon})=><Link key={id} href={`/projects/${slug}${id==="overview"?"":`?tab=${id}`}`} aria-current={tab===id?"page":undefined}><Icon size={16}/>{label}</Link>)}</nav>
  {project.archived_at&&<p className="dv-status">This project is archived. Restore it from Settings to resume editing.</p>}
  {tab==="overview"&&<><section className="dv-surface dv-workspace-section"><h2><FolderCode size={20}/>Overview</h2><p className="dv-project-description">{project.description||"No description has been added."}</p>{canEdit&&!project.description&&!project.archived_at&&<Link href={`/projects/${slug}?tab=settings`} className="dv-button">Add a description</Link>}<div className="dv-project-facts"><div><small>Stage</small><strong>{project.stage}</strong></div><div><small>Team</small><Link href={`/projects/${slug}?tab=people`}>{team.length} {team.length===1?"person":"people"}</Link></div><div><small>Created</small><time dateTime={project.created_at}>{project.created_at.slice(0,10)}</time></div><div><small>Updated</small><time dateTime={project.updated_at}>{project.updated_at.slice(0,10)}</time></div></div><h3>Technologies</h3>{project.technologies.length?<div className="dv-pills">{project.technologies.map(t=><span className="dv-pill" key={t}>{t}</span>)}</div>:<p className="dv-note">No technologies listed.</p>}</section><ProjectGitHub id={project.id} slug={slug} owner={owner} member={!!role} archived={!!project.archived_at}/></>}

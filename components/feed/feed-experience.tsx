@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { ArrowUpRight, Link2, MessageCircle, Share2, Trash2 } from "lucide-react";
 
+import ProjectAttachment, { ProjectReferences } from "@/components/project-references/project-attachment";
 import ShareSheet from "@/components/ShareSheet";
 import ProfileAvatar from "@/components/profile/ProfileAvatar";
 import { createClient } from "@/lib/supabase/client";
@@ -250,6 +251,7 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
   }, [commentText, commentingTo]);
 
   return (
+    <ProjectReferences references={posts.filter(post=>post.resource_kind==="project").map(post=>post.resource_url)}>
     <div className={styles.layout}>
       <section className={styles.main} aria-label="Community Feed">
         {loadError === "setup" ? (
@@ -284,7 +286,7 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
                     </div>
                     {post.title && <h3 className={styles.postTitle}>{post.title}</h3>}
                     <p className={styles.postBody}>{post.body}</p>
-                    {post.resource_url && (
+                    {post.resource_url && post.resource_kind === "project" ? <ProjectAttachment reference={post.resource_url}/> : post.resource_url && (
                       <a className={styles.resourceCard} href={post.resource_url} target={post.resource_url.startsWith("/") ? undefined : "_blank"} rel={post.resource_url.startsWith("/") ? undefined : "noreferrer"}>
                         <span className={styles.resourceIcon}><Link2 size={16} /></span>
                         <span><small>{post.resource_kind}</small><strong>{post.resource_label}</strong></span>
@@ -422,5 +424,6 @@ export default function FeedExperience({ currentProfile, activeView, canParticip
         />
       )}
     </div>
+    </ProjectReferences>
   );
 }

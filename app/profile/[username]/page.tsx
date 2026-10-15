@@ -1,3 +1,4 @@
+import ProfileProjects from "@/components/project-references/profile-projects";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -104,7 +105,7 @@ export default async function ProfilePage({
 
   const query = (Array.isArray(q) ? q[0] : q)?.trim() ?? "";
   const requestedTab = Array.isArray(tab) ? tab[0] : tab;
-  const activeTab = ["all", "replies", "comments", "watching"].includes(requestedTab ?? "") ? requestedTab! : "all";
+  const activeTab = ["all", "replies", "comments", "watching", "projects"].includes(requestedTab ?? "") ? requestedTab! : "all";
 
   const profile = await getPublicProfile(username);
 
@@ -370,7 +371,7 @@ export default async function ProfilePage({
         {/* ───────── Tabs ───────── */}
         <div className="mt-10 flex items-center justify-between gap-3">
           <div className="flex items-center gap-1 overflow-x-auto sm:gap-2">
-            {[{ id: "all", label: "All Posts" }, { id: "replies", label: "Replies" }, { id: "comments", label: "Comments" }, { id: "watching", label: "Watching" }].map((item) => (
+            {[{ id: "all", label: "All Posts" }, { id: "replies", label: "Replies" }, { id: "comments", label: "Comments" }, { id: "watching", label: "Watching" }, {id:"projects",label:"Projects"}].map((item) => (
               <Link key={item.id} href={`/profile/${profile.username}?tab=${item.id}${query ? `&q=${encodeURIComponent(query)}` : ""}`} aria-current={activeTab === item.id ? "page" : undefined} className={`shrink-0 rounded-[10px] px-3.5 py-2.5 text-[15px] font-medium sm:px-4 sm:text-[16px] ${activeTab === item.id ? "bg-[#e8e8ed] font-semibold text-[#1d1d1f]" : "text-[#6e6e73] hover:bg-[#f5f5f7]"}`}>
                 {item.label}{item.id === "replies" && feedReplies.length ? ` ${feedReplies.length}` : ""}
               </Link>
@@ -383,8 +384,10 @@ export default async function ProfilePage({
           </span>
         </div>
 
+        {activeTab === "projects" && <ProfileProjects profileId={profile.id} query={query}/>}
+
         {/* Search summary */}
-        {query && (
+        {query && activeTab !== "projects" && (
           <p className="mt-4 text-[14px] text-[#6e6e73]">
             {activeCount} {activeCount === 1 ? "result" : "results"} for
             &ldquo;{query}&rdquo; ·{" "}

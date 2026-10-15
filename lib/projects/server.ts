@@ -1,4 +1,5 @@
 import "server-only";
+import { PROJECT_ID } from "@/lib/project-references/contract";
 import { createClient } from "@/lib/supabase/server";
 import type { Project, ProjectCursor, ProjectInput, ProjectTeamMember } from "./types";
 
@@ -22,7 +23,7 @@ function fail(error: { code?: string; message: string }): never {
 /** RLS also protects lookups by ID or slug; inaccessible projects return null. */
 export async function getProjectBySlug(slug: string): Promise<Project | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.from("projects").select("*").eq("slug", slug).maybeSingle();
+  const { data, error } = await supabase.from("projects").select("*").eq(PROJECT_ID.test(slug) ? "id" : "slug", slug).maybeSingle();
   if (error) fail(error);
   return data as Project | null;
 }

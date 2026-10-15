@@ -1,3 +1,4 @@
+import BlogProjectContent from "@/components/project-references/blog-project-content";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
@@ -129,13 +130,7 @@ export default async function BlogPostPage({
           ) : null}
 
           <div className="mt-9 space-y-6 text-[16px] leading-8 text-[#3A382F]">
-            {post.content.map(
-              (paragraph, index) => (
-                <p key={index}>
-                  {paragraph}
-                </p>
-              )
-            )}
+            <BlogProjectContent paragraphs={post.content}/>
           </div>
 
           {post.tags.length > 0 && (

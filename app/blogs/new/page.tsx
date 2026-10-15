@@ -1,5 +1,7 @@
 "use client";
 
+import ProjectPicker from "@/components/project-references/project-picker";
+import type {ProjectPreview} from "@/lib/project-references/contract";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,6 +36,7 @@ export default function NewPostPage() {
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
+  const [attachedProject,setAttachedProject]=useState<ProjectPreview|null>(null);
   const [category, setCategory] = useState<PostCategory>("Ideas");
   const [tagsInput, setTagsInput] = useState("");
 
@@ -140,7 +143,7 @@ export default function NewPostPage() {
     const result = await createBlogPost({
       title: cleanTitle,
       excerpt: cleanExcerpt,
-      content: paragraphs,
+      content: attachedProject ? [...paragraphs,`[[project:${attachedProject.id}]]`] : paragraphs,
       category,
       tags,
       readTime,
@@ -237,6 +240,8 @@ export default function NewPostPage() {
               className={`${fieldClass} resize-y leading-7`}
             />
           </div>
+
+          <details className="sabha-surface" style={{padding:18,borderRadius:16}}><summary style={{cursor:"pointer",marginBottom:12}}>Attach a project</summary><ProjectPicker value={attachedProject} onChange={setAttachedProject}/></details>
 
           {/* Category + tags */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -1,5 +1,6 @@
 "use client";
 
+import BlogProjectContent from "@/components/project-references/blog-project-content";
 import Link from "next/link";
 import { AnuReveal, AnuTitle, useBlogSummary } from "./anu/anu-summary";
 import {
@@ -706,7 +707,7 @@ export default function BlogDetailModal({
                   ) : null}
 
                   <div className="mt-5 space-y-4 text-[16px] leading-[1.6] text-[#424245]">
-                    {blogSummary.active ? <AnuReveal text={blogSummary.summary} animate={blogSummary.fresh} delay={200} /> : post.content.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+                    {blogSummary.active ? <><AnuReveal text={blogSummary.summary} animate={blogSummary.fresh} delay={200} /><BlogProjectContent paragraphs={post.content} attachmentsOnly/></> : <BlogProjectContent paragraphs={post.content}/>}
                   </div>
 
                   {blogSummary.error && <p role="alert" className="mt-3 text-[12px] text-[#b42318]">{blogSummary.error}</p>}
