@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { repositoryMember } from "@/lib/anu/repository";
 import { uuid } from "@/lib/anu/context";
 export const dynamic = "force-dynamic";
 const json = (body: object, status = 200) => Response.json(body, { status, headers: { "Cache-Control": "private, no-store", Vary: "Cookie" } });
@@ -13,10 +14,11 @@ export async function GET(request: Request) {
  const permitted=new Map<string,boolean>();
  const grouped=new Map<string,Set<string>>();
  for(const turn of data||[])for(const source of Array.isArray(turn.context_sources)?turn.context_sources:[]) {
-  if(!source||!tables[source.kind]||!uuid.test(source.id||""))continue;
+  if(!source||(!tables[source.kind] && source.kind!=="repository")||!uuid.test(source.id||""))continue;
   const ids=grouped.get(source.kind)||new Set<string>();ids.add(source.id);grouped.set(source.kind,ids);
  }
  await Promise.all([...grouped].map(async([kind,ids])=>{
+   if(kind==="repository"){await Promise.all([...ids].map(async id=>{if(await repositoryMember(db,id,user.id))permitted.set(`${kind}:${id}`,true);}));return;}
    let query=db.from(tables[kind]).select("id").in("id",[...ids]);
    if(kind==="notification")query=query.eq("recipient_id",user.id);
    const result=await query;

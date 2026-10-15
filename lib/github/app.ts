@@ -8,11 +8,11 @@ export function admin() { return createClient(process.env.NEXT_PUBLIC_SUPABASE_U
 export async function github<T>(path: string, token: string, options: RequestInit = {}): Promise<{ data: T; status: number }> {
  const stage = path.includes("/access_tokens") ? "installation-token" : path.includes("/stats/") ? "activity" : path.includes("/commits?") ? "commits" : "repository-access";
  let response: Response;
- try { response = await fetch(`https://api.github.com${path}`, { ...options, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000), headers: { Accept: "application/vnd.github+json", ...(options.body?{"Content-Type":"application/json"}:{}), Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2026-03-10", ...options.headers } }); } catch { throw new GitHubError("network", "GitHub couldn’t be reached. Try again shortly.", stage); }
+ try { response = await fetch(`https://api.github.com${path}`, { ...options, cache: "no-store", redirect: "error", signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000), headers: { Accept: "application/vnd.github+json", ...(options.body?{"Content-Type":"application/json"}:{}), Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2026-03-10", ...options.headers } }); } catch { throw new GitHubError("network", "GitHub couldn’t be reached. Try again shortly.", stage); }
  if (!response.ok) throw githubFailure(response.status, stage);
  return { data: response.status === 204 ? null as T : await response.json().catch(()=>{throw new GitHubError("invalid-json","GitHub returned an unreadable response. Try again shortly.",stage);}) as T, status: response.status };
 }
-export async function installationToken(id: number, repositoryId: number) {
+export async function installationToken(id: number, repositoryId: number, signal?: AbortSignal) {
  const now = Math.floor(Date.now()/1000);
  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString("base64url");
  const body = `${encode({alg:"RS256",typ:"JWT"})}.${encode({iat:now-60,exp:now+540,iss:process.env.GITHUB_APP_CLIENT_ID?.trim() || process.env.GITHUB_APP_ID?.trim()})}`;
@@ -26,7 +26,7 @@ export async function installationToken(id: number, repositoryId: number) {
   if (key.asymmetricKeyType !== "rsa") throw new Error();
   signature = createSign("RSA-SHA256").update(body).sign(key).toString("base64url");
  } catch { throw new GitHubError("private-key-format", "The GitHub private key in Vercel isn’t a complete RSA PEM key. Replace GITHUB_APP_PRIVATE_KEY with the full downloaded PEM contents, including BEGIN and END lines, then redeploy.", "app-signing"); }
- const {data} = await github<{token:string}>(`/app/installations/${id}/access_tokens`, `${body}.${signature}`, {method:"POST", body:JSON.stringify({repository_ids:[repositoryId],permissions:{contents:"read",metadata:"read"}})});
+ const {data} = await github<{token:string}>(`/app/installations/${id}/access_tokens`, `${body}.${signature}`, {method:"POST", signal, body:JSON.stringify({repository_ids:[repositoryId],permissions:{contents:"read",metadata:"read"}})});
  return data.token;
 }
 export type Flow = { user: string; project: string; slug: string; state: string; verifier: string; expires: number; expectedConnection?:string|null; token?: string };

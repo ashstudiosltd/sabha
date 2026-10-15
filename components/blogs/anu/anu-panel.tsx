@@ -28,7 +28,8 @@ function turnId() {
   return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
 }
 function sourceValid(source: Source) {
- return source && typeof source.title === "string" && typeof source.url === "string" && /^https:\/\/sabha\.devvrats\.in\/(?:blogs\/[a-zA-Z0-9-]+|projects\/[a-zA-Z0-9-]+|feed\/[a-zA-Z0-9-]+|feed\/clans\/[a-zA-Z0-9-]+|notifications)$/.test(source.url);
+ if(!source || typeof source.title!=="string" || typeof source.url!=="string")return false;
+ try { const url=new URL(source.url);return url.protocol==="https:"&&!url.username&&!url.password&&((url.hostname==="sabha.devvrats.in"&&/^\/(?:blogs\/[a-zA-Z0-9-]+|projects\/[a-zA-Z0-9-]+|feed\/[a-zA-Z0-9-]+|feed\/clans\/[a-zA-Z0-9-]+|notifications)$/.test(url.pathname))||(url.hostname==="github.com"&&/^\/[^/]+\/[^/]+\/(?:tree|blob)\/[a-f0-9]{40}(?:\/.*)?$/i.test(url.pathname))); }catch{return false;}
 }
 function historyFor(messages: Message[]) {
   const history = messages.slice(-20).map(({ role, text }) => ({ role, text: text.slice(0, 4000) }));
@@ -130,7 +131,7 @@ function AnuPanel({ onClose, onHeight, userId, area, focus }: { onClose: () => v
       if (!response.ok || typeof data.reply !== "string") throw new Error(data.error || "Anu couldn't reply. Please try again.");
       if (controller.current !== abort) return;
       const knownSources = new Set(previous.flatMap((message) => message.sources || []).map((source) => source.url));
-      const sources = Array.isArray(data.sources) ? data.sources.filter((source: Source) => source && typeof source.title === "string" && typeof source.url === "string" && /^https:\/\/sabha\.devvrats\.in\/(?:blogs\/[a-zA-Z0-9-]+|projects\/[a-zA-Z0-9-]+|feed\/[a-zA-Z0-9-]+|feed\/clans\/[a-zA-Z0-9-]+|notifications)$/.test(source.url) && !knownSources.has(source.url)) : [];
+      const sources = Array.isArray(data.sources) ? data.sources.filter((source: Source) => sourceValid(source) && !knownSources.has(source.url)) : [];
       if(userId && !data.historySaved)setNotice("This reply wasn’t saved to your account.");
       setFreshReply(Math.min(previous.length + 1, 39));
       setMessages([...previous, { role: "user", text: question }, { role: "assistant", text: data.reply, sources }].slice(userId ? -40 : -20) as Message[]);
@@ -162,7 +163,7 @@ function AnuPanel({ onClose, onHeight, userId, area, focus }: { onClose: () => v
       {messages.map((message, index) => {
         const references = (message.sources || []).filter(sourceValid).filter((source) => !messages.slice(0, index).some((earlier) => earlier.sources?.some((item) => item.url === source.url)));
         return <div key={index} className={`${styles.message} ${message.role === "user" ? styles.user : styles.assistant}`}><div className={styles.bubble}>{message.role === "assistant" ? <AnuReveal text={message.text} animate={index === freshReply} /> : message.text}</div>
-        {!!references.length && <div className={styles.sources}>{references.map((source) => <a key={source.url} href={new URL(source.url).pathname} className={styles.source} aria-label={`Reference: ${source.title}`}>Reference</a>)}</div>}
+        {!!references.length && <div className={styles.sources}>{references.map((source) => <a key={source.url} href={new URL(source.url).hostname === "github.com" ? source.url : new URL(source.url).pathname} className={styles.source} aria-label={`Reference: ${source.title}`}>Reference</a>)}</div>}
       </div>; })}
       {busy && <p role="status" className={styles.thinking}>Anu is thinking…</p>}
       {notice && <p className={styles.thinking}>{notice}</p>}

@@ -1,3 +1,4 @@
+import { repositoryContext } from "@/lib/anu/repository";
 import { createClient } from "@/lib/supabase/server";
 import { retrieveContext, uuid } from "@/lib/anu/context";
 export const runtime = "nodejs";
@@ -26,13 +27,18 @@ export async function POST(request: Request) {
     if (body.scope != null && (typeof body.scope !== "string" || !/^[a-z0-9:-]{1,120}$/i.test(body.scope))) return json({ error: "Invalid conversation." }, 400);
     if (body.focus && (!uuid.test(body.focus.id || "") || !["project", "blog", "feed", "clan", "notification"].includes(body.focus.kind))) return json({ error: "This reference is invalid." }, 400);
     const context = await retrieveContext(db, user.id, body.message, body.focus);
+    if (body.focus?.kind === "project") {
+      const repository = await repositoryContext(db,user.id,body.focus.id,body.message);
+      if(repository.source) context.sources = [context.sources[0],repository.source,...context.sources.slice(1,5)].filter((source): source is NonNullable<typeof source> => !!source);
+      context.coverage += ` Repository: ${repository.status}`;
+    }
     const history: Array<{role: "user" | "assistant"; text: string}> = [];
     if (body.scope) {
       const { data: turns } = await db.from("anu_conversation_turns").select("question,answer,context_sources").eq("user_id", user.id).eq("scope", body.scope).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(4);
       const fresh = new Set(context.sources.map(source => `${source.kind}:${source.id}`));
       let size = 0;
       for (const turn of (turns || []).reverse()) {
-        if (!Array.isArray(turn.context_sources) || !turn.context_sources.every((source: {kind:string;id:string}) => source && fresh.has(`${source.kind}:${source.id}`))) continue;
+        if (!Array.isArray(turn.context_sources) || turn.context_sources.some((source: {kind:string}) => source?.kind === "repository") || !turn.context_sources.every((source: {kind:string;id:string}) => source && fresh.has(`${source.kind}:${source.id}`))) continue;
         if (typeof turn.question !== "string" || typeof turn.answer !== "string" || turn.question.length > 2000 || turn.answer.length > 4000) continue;
         if (size + turn.question.length + turn.answer.length > 12_000) continue;
         history.push({role:"user",text:turn.question},{role:"assistant",text:turn.answer});

@@ -41,3 +41,9 @@ Apply `supabase/migrations/20261020_anu_history.sql` in Sabha's Supabase SQL Edi
 Before restoring an answer, all context source IDs are batch-checked under current RLS. Answers involving an unavailable source are omitted. Up to four recent turns are replayed only when all their source IDs occur in the freshly retrieved context, with a 12,000-character budget. This deliberately limited recall may omit previous turns when the topic or source selection changes. Long-term preference memory is not implemented. The standalone Anu portal history is not connected to this table yet.
 
 No migration has been executed remotely and no deployment, build, or tests were run in this increment.
+
+## Repository understanding
+
+Focused project chats retrieve the current connected repository only for the owner or explicit project_members. A repository-scoped installation token reads the default branch commit, its recursive tree, and up to five relevant source/manifests/README excerpts pinned to that commit. Each excerpt is at most 2,000 characters; the map lists up to 40 eligible paths. Truncated trees and excerpts are marked. Prior repository-backed turns are not replayed as current code evidence. Access and the connection identity are checked again after retrieval. The interface accepts canonical GitHub references pinned to the commit.
+
+Files over 100 KB, common credential paths, binaries and generated directories are excluded. Obvious credential patterns are redacted, but detection is not complete. Repository contents never enter a cross-user cache. No issues/PR ingestion or full indexing is implemented. Ask focused questions from an individual project's page; a general discovery question does not scan every connected repository. Deploy both applications for the extended context contract. No additional SQL needed for repository reading.
