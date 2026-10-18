@@ -11,20 +11,25 @@ export async function syncRepository(connection:Connection) {
  if(!lease.data) return {state:"throttled" as const};
  const leaseId=lease.data as string;
  try {
-  const token=await installationToken(connection.installation_id,connection.repository_id);
-  const {data:repo}=await github<Repository>(`/repositories/${connection.repository_id}`,token);
+  const signal=AbortSignal.timeout(40000);
+  const token=await installationToken(connection.installation_id,connection.repository_id,signal);
+  const {data:repo}=await github<Repository>(`/repositories/${connection.repository_id}`,token,{signal});
   if(repo.id!==Number(connection.repository_id)||typeof repo.full_name!=="string"||! /^[^/]+\/[^/]+$/.test(repo.full_name)||typeof repo.default_branch!=="string"||typeof repo.private!=="boolean"||!Number.isSafeInteger(repo.stargazers_count)||repo.stargazers_count<0||!Number.isSafeInteger(repo.forks_count)||repo.forks_count<0)throw new GitHubError("repository-response","GitHub returned incomplete repository information. Try again shortly.","sync-metadata");
   const path=repo.full_name.split("/").map(encodeURIComponent).join("/");
-  const stats=await github<{week:number;days:number[];total:number}[]>(`/repos/${path}/stats/commit_activity`,token);
+  const stats=await github<{week:number;days:number[];total:number}[]>(`/repos/${path}/stats/commit_activity`,token,{signal});
   const ready=(stats.status===200&&Array.isArray(stats.data))||stats.status===204;
   if(stats.status===200&&(!Array.isArray(stats.data)||stats.data.length>60||stats.data.some(w=>!Number.isSafeInteger(w.week)||!Array.isArray(w.days)||w.days.length!==7)))throw new GitHubError("activity-response","GitHub returned incomplete activity data. Try again shortly.","sync-activity");
   const activity:ActivityDay[]=ready&&Array.isArray(stats.data)?stats.data.flatMap(w=>w.days.map((count,index)=>({date:new Date((w.week+index*86400)*1000).toISOString().slice(0,10),count}))):[];
   if(activity.some(d=>!Number.isSafeInteger(d.count)||d.count<0)) throw new Error("Invalid activity");
   const {error}=await db.rpc("finish_project_github_sync",{p_project_id:connection.project_id,p_connection_id:connection.connection_id,p_lease:leaseId,p_full_name:repo.full_name,p_branch:repo.default_branch,p_private:repo.private,p_stars:repo.stargazers_count,p_forks:repo.forks_count,p_activity:activity,p_ready:ready});
-  if(error) throw new GitHubError("sync-storage", "GitHub activity couldn’t be stored. Check the Supabase GitHub migration.", "finish-sync");
+  if(error) throw new GitHubError(error.code==="40001"?"connection-changed":"sync-storage", "GitHub activity couldn’t be stored. Check the Supabase GitHub migration.", "finish-sync");
   return {state:ready?"ready" as const:"pending" as const};
  } catch (cause) {
-  await db.from("project_github_connections").update({public_ready:false,sync_status:"unavailable",sync_lease:null,sync_started_at:null}).eq("project_id",connection.project_id).eq("connection_id",connection.connection_id).eq("sync_lease",leaseId);
-  throw reportGitHubError(cause, "sync");
+  const reported=reportGitHubError(cause, "sync");
+  const failure={public_ready:false,sync_status:"unavailable",sync_lease:null,sync_started_at:null};
+  const recorded=await db.from("project_github_connections").update({...failure,sync_error_code:reported.code,sync_error_at:new Date().toISOString()}).eq("project_id",connection.project_id).eq("connection_id",connection.connection_id).eq("sync_lease",leaseId);
+  // Preserve failure visibility if the optional health migration is not applied yet.
+  if(recorded.error) await db.from("project_github_connections").update(failure).eq("project_id",connection.project_id).eq("connection_id",connection.connection_id).eq("sync_lease",leaseId);
+  throw reported;
  }
 }

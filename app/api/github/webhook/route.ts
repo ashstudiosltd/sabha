@@ -27,6 +27,7 @@ export async function POST(request:Request) {
  const {data,error}=await admin().rpc("prepare_project_github_delivery",{p_delivery_id:delivery,p_installation_id:installation,p_repository_id:repositoryId??null,p_revoked:revoked,p_removed_ids:removed});
  if(error)return Response.json({error:"Storage unavailable"},{status:503});
  const connections=(data??[]) as Connection[];
- after(async()=>{for(let i=0;i<connections.length;i+=4){await Promise.allSettled(connections.slice(i,i+4).filter(c=>c.sync_status!=="unavailable").map(syncRepository));}});
+ // Bound work to one concurrent batch; the scheduler picks up remaining invalidated rows.
+ after(async()=>{await Promise.allSettled(connections.slice(0,4).filter(c=>c.sync_status!=="unavailable").map(syncRepository));});
  return Response.json({ok:true},{headers:{"Cache-Control":"no-store"}});
 }

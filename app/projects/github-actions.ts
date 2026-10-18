@@ -31,7 +31,7 @@ export async function disconnectGitHub(slug:string,connectionId:string) {
 }
 export async function refreshGitHub(slug:string) {
  try {const {project}=await owner(slug);const {data,error}=await admin().from("project_github_connections").select("*").eq("project_id",project.id).single();if(error)throw new Error("Connect a repository first.");
- if(data.synced_at&&Date.now()-Date.parse(data.synced_at)<60000)return {ok:true as const,message:"Activity is already up to date. You can refresh again in a minute."};
+ if(data.sync_status==="ready"&&data.synced_at&&Date.now()-Date.parse(data.synced_at)<60000)return {ok:true as const,message:"Activity is already up to date. You can refresh again in a minute."};
  const result=await syncRepository(data as Connection);revalidatePath(`/projects/${slug}`);return {ok:true as const,message:result.state==="ready"?"Repository activity is up to date.":result.state==="pending"?"GitHub is preparing the graph. Refresh again shortly.":"A refresh is already running or was just attempted. Try again in a minute."};
  }catch(cause){const error=reportGitHubError(cause,"refresh");return {ok:false as const,error:cause instanceof GitHubError?error.message:"Activity couldn’t be refreshed yet. Wait a minute and try again."};}
 }

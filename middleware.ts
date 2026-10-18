@@ -11,6 +11,8 @@ export async function middleware(
   request: NextRequest
 ) {
   if (["/api/github/webhook", "/api/github/reconcile"].includes(request.nextUrl.pathname)) return NextResponse.next();
+  if (request.nextUrl.pathname === "/api/github/status") return NextResponse.next();
+  if (request.nextUrl.pathname === "/api/projects/work") return NextResponse.next();
   if (request.nextUrl.pathname === "/api/project-references") return NextResponse.next();
   if (request.nextUrl.pathname === "/api/anu/chat" || request.nextUrl.pathname === "/api/anu/history") return NextResponse.next();
   if (request.nextUrl.pathname === "/api/anu/blogs" || request.nextUrl.pathname === "/api/anu/blogs-context") return NextResponse.next();

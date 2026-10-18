@@ -80,7 +80,7 @@ export default async function BlogPostPage({
             {post.date} · {post.readTime}
           </div>
 
-          <h1 className="mt-3  text-[34px] leading-[1.15] tracking-[-0.02em] text-[#1B1B18] sm:text-[46px]">
+          <h1 className="[overflow-wrap:anywhere] mt-3  text-[34px] leading-[1.15] tracking-[-0.02em] text-[#1B1B18] sm:text-[46px]">
             {post.title}
           </h1>
 
@@ -129,7 +129,7 @@ export default async function BlogPostPage({
             </div>
           ) : null}
 
-          <div className="mt-9 space-y-6 text-[16px] leading-8 text-[#3A382F]">
+          <div className="mt-9 min-w-0 [overflow-wrap:anywhere] space-y-6 text-[16px] leading-8 text-[#3A382F]">
             <BlogProjectContent paragraphs={post.content}/>
           </div>
 

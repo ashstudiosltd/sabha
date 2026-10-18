@@ -12,5 +12,6 @@ export async function GET(request:Request) {
  // Delivery IDs contain no payloads or credentials; retain them for seven days.
  await db.from("project_github_deliveries").delete().lt("received_at",new Date(Date.now()-7*86400000).toISOString());
  const results=await Promise.allSettled((data as Connection[]).map(syncRepository));
- return Response.json({processed:results.length,deferred:results.filter(r=>r.status==="fulfilled"&&r.value.state==="throttled").length,failed:results.filter(r=>r.status==="rejected").length},{headers:{"Cache-Control":"no-store"}});
+ const failed=results.filter(r=>r.status==="rejected").length;
+ return Response.json({processed:results.length,ready:results.filter(r=>r.status==="fulfilled"&&r.value.state==="ready").length,pending:results.filter(r=>r.status==="fulfilled"&&r.value.state==="pending").length,deferred:results.filter(r=>r.status==="fulfilled"&&r.value.state==="throttled").length,failed},{status:results.length>0&&failed===results.length?503:200,headers:{"Cache-Control":"no-store"}});
 }

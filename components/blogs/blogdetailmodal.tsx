@@ -675,7 +675,7 @@ export default function BlogDetailModal({
             <div
               ref={bodyRef}
               onScroll={updateScrollFx}
-              className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3 pt-3 sm:px-4 sm:pb-4"
+              className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-3 pb-3 pt-3 sm:px-4 sm:pb-4"
               style={{
                 WebkitMaskImage: MASK,
                 maskImage: MASK,
@@ -683,16 +683,16 @@ export default function BlogDetailModal({
             >
               <div
                 ref={contentRef}
-                className="flex flex-col gap-3"
+                className="flex min-w-0 flex-col gap-3"
               >
                 {/* ---------- BLOCK: POST ---------- */}
 
-                <div className="rounded-[14px] bg-white px-5 py-6 sm:px-8 sm:py-8">
+                <div className="min-w-0 rounded-[14px] bg-white px-5 py-6 sm:px-8 sm:py-8">
                   <p className="text-[13px] text-[#6e6e73]">
                     {post.date} · {post.readTime}
                   </p>
 
-                  <h1 className="mt-2 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#1d1d1f] sm:text-[40px]">
+                  <h1 className="mt-2 [overflow-wrap:anywhere] text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] text-[#1d1d1f] sm:text-[40px]">
                     {blogSummary.active ? <AnuTitle text={blogSummary.title} animate={blogSummary.fresh} /> : post.title}
                   </h1>
 
@@ -706,7 +706,7 @@ export default function BlogDetailModal({
                     </div>
                   ) : null}
 
-                  <div className="mt-5 space-y-4 text-[16px] leading-[1.6] text-[#424245]">
+                  <div className="mt-5 min-w-0 [overflow-wrap:anywhere] space-y-4 text-[16px] leading-[1.6] text-[#424245]">
                     {blogSummary.active ? <><AnuReveal text={blogSummary.summary} animate={blogSummary.fresh} delay={200} /><BlogProjectContent paragraphs={post.content} attachmentsOnly/></> : <BlogProjectContent paragraphs={post.content}/>}
                   </div>
 

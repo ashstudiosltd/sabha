@@ -53,11 +53,11 @@ export default function BlogCard({
         <div className="mt-3">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <h2 className="text-[22px] font-semibold leading-[1.25] tracking-[-0.022em] text-[#1d1d1f] transition-colors group-hover:text-[#0066cc]">
+              <h2 className="[overflow-wrap:anywhere] text-[22px] font-semibold leading-[1.25] tracking-[-0.022em] text-[#1d1d1f] transition-colors group-hover:text-[#0066cc]">
                 {post.title}
               </h2>
 
-              <p className="mt-1.5 line-clamp-3 text-[14px] leading-6 text-[#6e6e73]">
+              <p className="mt-1.5 [overflow-wrap:anywhere] line-clamp-3 text-[14px] leading-6 text-[#6e6e73]">
                 {post.excerpt}
               </p>
             </div>

@@ -120,15 +120,13 @@ export default function SabhaPostComposer({ postType, onPostTypeChange, submitEr
       <details className={styles.resourceDetails}>
         <summary><Link2 size={15} /> Add a reference</summary>
         <div className={styles.resourceFields}>
-          <select className={`sabha-field ${styles.kindSelect}`} value={resourceKind} onChange={(event) => setResourceKind(event.target.value as SabhaResourceKind)} aria-label="Reference type">
-            <option value="link">Link</option><option value="blog">Sabha blog</option><option value="project">Sabha project</option><option value="github">GitHub</option><option value="readme">README</option><option value="image">Image</option>
-          </select>
+          <div className={styles.referenceTypes} role="group" aria-label="Reference type">{([{id:"link",label:"Link"},{id:"blog",label:"Blog"},{id:"project",label:"Project"},{id:"github",label:"GitHub"},{id:"readme",label:"README"},{id:"image",label:"Image"}] as const).map(option=><button type="button" key={option.id} aria-pressed={resourceKind===option.id} onClick={()=>setResourceKind(option.id)}>{option.label}</button>)}</div>
           {resourceKind === "project" ? <ProjectPicker value={project} onChange={setProject}/> : <>
           <input className={`sabha-field ${styles.resourceInput}`} value={resourceLabel} onChange={(event) => setResourceLabel(event.target.value)} placeholder="Reference name" maxLength={120} aria-label="Reference name" />
           <input className={`sabha-field ${styles.resourceInput}`} value={resourceUrl} onChange={(event) => setResourceUrl(event.target.value)} placeholder="https://… or a Sabha link" maxLength={2048} aria-label="Reference URL" inputMode="url" />
           </>}
         </div>
-        <p className={styles.hint}><ImageIcon size={13} /> Images can be linked here; direct uploads will follow with storage and access rules.</p>
+        {resourceKind === "image" && <p className={styles.hint}><ImageIcon size={13} /> Images can be linked here; direct uploads will follow with storage and access rules.</p>}
       </details>
 
       {(error || submitError) && <p className={styles.error} role="alert">{error ?? submitError}</p>}
