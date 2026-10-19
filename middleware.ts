@@ -14,7 +14,7 @@ export async function middleware(
   if (request.nextUrl.pathname === "/api/github/status") return NextResponse.next();
   if (request.nextUrl.pathname === "/api/projects/work") return NextResponse.next();
   if (request.nextUrl.pathname === "/api/project-references") return NextResponse.next();
-  if (request.nextUrl.pathname === "/api/anu/chat" || request.nextUrl.pathname === "/api/anu/history") return NextResponse.next();
+  if (request.nextUrl.pathname === "/api/anu/chat" || request.nextUrl.pathname === "/api/anu/history" || request.nextUrl.pathname === "/api/anu/actions" || request.nextUrl.pathname === "/api/anu/conversations") return NextResponse.next();
   if (request.nextUrl.pathname === "/api/anu/blogs" || request.nextUrl.pathname === "/api/anu/blogs-context") return NextResponse.next();
   let response =
     NextResponse.next({

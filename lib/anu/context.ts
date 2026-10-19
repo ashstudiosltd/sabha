@@ -3,42 +3,88 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AnuSource = { id: string; kind: string; title: string; url: string; text: string; references?: Array<{title:string;url:string}> };
 export const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** Every query uses the request's session and RLS, never service credentials. */
+const stop = new Set("the and for with from that this have what when where which who how can could please tell show about help me my our your their are was were is has does explain summarize summary search find latest recent new project projects blog blogs post posts feed clan clans sabha anu devvrats private public team members replies comments write publish draft create add building update edit".split(" "));
+export function searchWords(message: string) { return [...new Set(message.toLowerCase().match(/[\p{L}\p{N}]{3,48}/gu) || [])].filter(word => !stop.has(word)).slice(0, 8); }
+const areas = [
+  { table: "projects", kind: "project", fields: "id,slug,name,tagline,description,technologies,stage,visibility,version,owner_id,publication_status,archived_at,updated_at", search: ["name", "tagline", "description"], date: "updated_at" },
+  { table: "posts", kind: "blog", fields: "id,title,excerpt,content,created_at", search: ["title", "excerpt", "content"], date: "created_at" },
+  { table: "feed_posts", kind: "feed", fields: "id,title,body,clan_id,author_id,created_at", search: ["title", "body"], date: "created_at" },
+  { table: "clans", kind: "clan", fields: "id,slug,name,description,visibility,created_at", search: ["name", "description"], date: "created_at" },
+  { table: "notifications", kind: "notification", fields: "id,title,message,created_at", search: ["title", "message"], date: "created_at" },
+];
+/** All reads use the member's Supabase session and existing RLS; no service-role client. */
 export async function retrieveContext(db: Awaited<ReturnType<typeof createClient>>, userId: string, message: string, focus?: { kind: string; id: string }) {
-  const sources: AnuSource[] = [];
+  const words = searchWords(message);
   const unavailable: string[] = [];
-  const words = [...new Set(message.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || [])].slice(0, 20);
-  const groups = await Promise.all([
-    db.from("projects").select("id,slug,name,tagline,description,technologies,stage,updated_at").order("updated_at", { ascending: false }).limit(40),
-    db.from("posts").select("id,title,excerpt,content,created_at").order("created_at", { ascending: false }).limit(40),
-    db.from("feed_posts").select("id,title,body,created_at").order("created_at", { ascending: false }).limit(40),
-    db.from("clans").select("id,slug,name,description,created_at").order("created_at", { ascending: false }).limit(40),
-    // Recipient filtering is explicit as well as enforced by notifications RLS.
-    db.from("notifications").select("id,title,message,created_at").eq("recipient_id", userId).order("created_at", { ascending: false }).limit(15),
-  ]);
-  const tables = ["projects", "posts", "feed_posts", "clans", "notifications"] as const;
-  const kinds = ["project", "blog", "feed", "clan", "notification"];
-  const fields = ["id,slug,name,tagline,description,technologies,stage,updated_at", "id,title,excerpt,content,created_at", "id,title,body,created_at", "id,slug,name,description,created_at", "id,title,message,created_at"];
-  for (let index = 0; index < groups.length; index++) {
-    const result = groups[index];
-    if (result.error) { unavailable.push(kinds[index]); continue; }
+  const sources: AnuSource[] = [];
+  const records = new Map<AnuSource, Record<string, unknown>>();
+  const groups = await Promise.all(areas.map(async area => {
+    let query = db.from(area.table).select(area.fields);
+    if (area.kind === "project" && /\b(my|our)\b.*\bprojects?\b|\bprojects?\b.*\bmine\b/i.test(message)) {
+      const memberships=await db.from("project_members").select("project_id").eq("profile_id",userId).limit(200);
+      if(memberships.error)unavailable.push("project:memberships");
+      const ids=(memberships.data||[]).map(row=>row.project_id).filter((id:unknown)=>typeof id==="string"&&uuid.test(id));
+      query=query.or(`owner_id.eq.${userId}${ids.length?`,id.in.(${ids.join(",")})`:""}`);
+    }
+    if (area.kind === "clan" && /\b(my|our)\b.*\bclans?\b|\bclans?\b.*\bmine\b/i.test(message)) {
+      const memberships=await db.from("clan_members").select("clan_id").eq("user_id",userId).limit(200);
+      if(memberships.error)unavailable.push("clan:memberships");
+      const ids=(memberships.data||[]).map(row=>row.clan_id).filter((id:unknown)=>typeof id==="string"&&uuid.test(id));
+      if(!ids.length)return {data:[],error:null};
+      query=query.in("id",ids);
+    }
+    if ((area.kind === "project" || area.kind === "clan") && /\bprivate\b/i.test(message)) query = query.eq("visibility", "private");
+    if (area.kind === "notification") query = query.eq("recipient_id", userId);
+    if (words.length) query = query.or(words.flatMap(word => area.search.map(field => `${field}.ilike.%${word}%`)).join(","));
+    return query.order(area.date, { ascending: false }).limit(20);
+  }));
+  for (let index = 0; index < areas.length; index++) {
+    const area = areas[index], result = groups[index];
+    if (result.error) { unavailable.push(area.kind); continue; }
     const rows = [...(result.data || [])] as unknown as Array<Record<string, unknown>>;
-    if (focus?.kind === kinds[index] && !rows.some(row => row.id === focus.id)) {
-      let selected = db.from(tables[index]).select(fields[index]).eq("id", focus.id);
-      if (index === 4) selected = selected.eq("recipient_id", userId);
-      const { data, error } = await selected.maybeSingle();
-      if (error) unavailable.push(kinds[index]);
-      else if (data) rows.unshift(data as unknown as Record<string, unknown>);
+    if (focus?.kind === area.kind && !rows.some(row => row.id === focus.id)) {
+      let query = db.from(area.table).select(area.fields).eq("id", focus.id);
+      if (area.kind === "notification") query = query.eq("recipient_id", userId);
+      const selected = await query.maybeSingle();
+      if (selected.error) unavailable.push(area.kind);
+      else if (selected.data) rows.unshift(selected.data as unknown as Record<string, unknown>);
     }
     for (const row of rows) {
       const id = String(row.id);
-      const kind = kinds[index];
-      const path = index === 0 ? `/projects/${encodeURIComponent(String(row.slug))}` : index === 1 ? `/blogs/${id}` : index === 2 ? `/feed/${id}` : index === 3 ? `/feed/clans/${encodeURIComponent(String(row.slug))}` : "/notifications";
-      sources.push({ id, kind, title: String(row.name || row.title || "Community update"), url: `https://sabha.devvrats.in${path}`, text: JSON.stringify(row).slice(0, 6000) });
+      const path = area.kind === "project" ? `/projects/${encodeURIComponent(String(row.slug))}` : area.kind === "blog" ? `/blogs/${id}` : area.kind === "feed" ? `/feed/${id}` : area.kind === "clan" ? `/feed/clans/${encodeURIComponent(String(row.slug))}` : "/notifications";
+      const source = { id, kind: area.kind, title: String(row.name || row.title || "Community update"), url: `https://sabha.devvrats.in${path}`, text: JSON.stringify(row).slice(0, 4300) };
+      sources.push(source); records.set(source, row);
     }
   }
-  const score = (s: AnuSource) => words.reduce((total, word) => total + (s.title.toLowerCase().includes(word) ? 3 : s.text.toLowerCase().includes(word) ? 1 : 0), 0);
-  const selected = sources.find(s => s.kind === focus?.kind && s.id === focus.id);
-  const ranked = sources.filter(s => s !== selected).map((source, index) => ({ source, index, score: score(source) })).filter(s => s.score > 0).sort((a,b) => b.score-a.score || a.index-b.index);
-  return { sources: [...(selected ? [selected] : []), ...ranked.map(s => s.source)].slice(0, 6), unavailable, focusUnavailable: !!focus && !selected, coverage: "Bounded search of up to 40 recently updated accessible records per area and 15 personal notifications, plus the selected record; not an exhaustive search.", fetchedAt: new Date().toISOString() };
+  const score = (source: AnuSource) => words.reduce((total, word) => total + (source.title.toLowerCase().includes(word) ? 3 : source.text.toLowerCase().includes(word) ? 1 : 0), 0);
+  const selected = sources.find(source => source.kind === focus?.kind && source.id === focus.id);
+  const ranked = sources.filter(source => source !== selected).sort((a, b) => score(b) - score(a));
+  const chosen = selected ? [selected] : [];
+  // A broad question gets coverage across areas instead of only the first table.
+  if (!words.length) for (const area of areas) { const source = ranked.find(item => item.kind === area.kind); if (source && !chosen.includes(source)) chosen.push(source); }
+  for (const source of ranked) if (chosen.length < 6 && !chosen.includes(source)) chosen.push(source);
+  await Promise.all(chosen.map(async source => {
+    const requests: Array<{ name: string; query: PromiseLike<{ data: unknown; error: unknown }> }> = [];
+    if (source.kind === "feed") {
+      requests.push({ name: "replies", query: db.from("feed_replies").select("id,author_id,body,created_at").eq("post_id", source.id).order("created_at", { ascending: false }).limit(12) });
+      requests.push({ name: "comments", query: db.from("feed_comments").select("id,author_id,body,created_at").eq("post_id", source.id).order("created_at", { ascending: false }).limit(12) });
+    } else if (source.kind === "blog") {
+      requests.push({ name: "comments", query: db.from("comments").select("id,user_id,content,created_at").eq("post_id", source.id).order("created_at", { ascending: false }).limit(12) });
+    } else if (source.kind === "clan") {
+      requests.push({ name: "members", query: db.from("clan_members").select("user_id,role").eq("clan_id", source.id).limit(20) });
+      requests.push({ name: "recent_posts", query: db.from("feed_posts").select("id,title,body,author_id,created_at").eq("clan_id", source.id).order("created_at", { ascending: false }).limit(8) });
+    } else if (source.kind === "project") {
+      requests.push({ name: "team", query: db.rpc("get_project_team", { p_project_id: source.id }) });
+      requests.push({ name: "contribution_guide", query: db.from("project_contribution_guides").select("overview,setup,first_steps,updated_at").eq("project_id", source.id).maybeSingle() });
+    }
+    const related: Record<string, unknown> = {};
+    await Promise.all(requests.map(async ({ name, query }) => { const result = await query; if (result.error) unavailable.push(`${source.kind}:${name}`); else related[name] = result.data; }));
+    const identities=new Set<string>();
+    const collect=(value:unknown)=>{if(!value||typeof value!=="object")return;for(const key of ["author_id","user_id","owner_id"]){const id=(value as Record<string,unknown>)[key];if(typeof id==="string"&&uuid.test(id))identities.add(id);}};
+    collect(records.get(source));
+    for(const value of Object.values(related)){if(Array.isArray(value))value.forEach(collect);else collect(value);}
+    if(identities.size){const {data,error}=await db.from("profiles").select("id,name,username").in("id",[...identities].slice(0,30));if(error)unavailable.push(`${source.kind}:profiles`);else related.profiles=data;}
+    if (requests.length || identities.size) source.text = `${source.text}\nRELATED AUTHORIZED RECORDS (bounded excerpts):\n${JSON.stringify(related).slice(0, 1600)}`.slice(0, 6000);
+  }));
+  return { sources: chosen.slice(0, 6), unavailable, focusUnavailable: !!focus && !selected, coverage: `Keyword search across accessible records of all ages (up to 20 matches per area), or recent overview when no search terms remain; up to six records with bounded related discussions/teams. Not an exhaustive or semantic search. Unavailable areas: ${unavailable.join(", ") || "none"}.`, fetchedAt: new Date().toISOString() };
 }

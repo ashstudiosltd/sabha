@@ -27,3 +27,6 @@ body {
 }
 
 button, input, select, textarea { font-family: inherit; }
+
+/* Anu action drafts stay separate from answers until the member confirms. */
+.anu-action-card{margin:14px 0;padding:16px;border:1px solid #9982c55c;border-radius:20px;color:inherit;font-family:inherit}.anu-action-card>strong{display:block;font-size:14px}.anu-action-card p,.anu-action-card small{font-size:12px;line-height:1.6}.anu-action-card h4{font-size:14px;margin:12px 0}.anu-action-card textarea{display:block;box-sizing:border-box;width:100%;padding:10px;margin:12px 0;border:1px solid #9982c55c;border-radius:12px;background:transparent;color:inherit;font:inherit;font-size:13px;resize:vertical}.anu-action-card dl{font-size:12px}.anu-action-card dl>div{display:flex;gap:10px;margin:5px 0}.anu-action-card dt{min-width:84px;font-weight:600}.anu-action-card dd{margin:0;overflow-wrap:anywhere}.anu-action-buttons{display:flex;gap:8px;margin-top:12px}.anu-action-buttons button{padding:8px 15px;border:1px solid #9982c580;border-radius:99px;background:transparent;color:inherit;font:inherit;font-size:12px;font-weight:600;cursor:pointer}.anu-action-buttons button:first-child{background:#60418e;color:white}.anu-action-buttons button:disabled{opacity:.5;cursor:default}.anu-action-card a{display:inline-block;margin-top:10px;font-size:12px;font-weight:600}.anu-action-status{font-size:12px}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { AnuActionCard, type ActionPreview } from "@/components/anu/action-card";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./anu-panel.module.css";
 import "./anu-orb.css";
@@ -10,7 +11,7 @@ import { AnuReveal } from "./anu-summary";
 import { ArrowUp, Trash2, X } from "lucide-react";
 
 type Source = { title: string; url: string };
-type Message = { role: "user" | "assistant"; text: string; sources?: Source[] };
+type Message = { role: "user" | "assistant"; text: string; sources?: Source[]; action?: ActionPreview };
 const STORAGE = "sabha-anu-blogs-v1";
 
 function LivingDot() {
@@ -132,9 +133,10 @@ function AnuPanel({ onClose, onHeight, userId, area, focus }: { onClose: () => v
       if (controller.current !== abort) return;
       const knownSources = new Set(previous.flatMap((message) => message.sources || []).map((source) => source.url));
       const sources = Array.isArray(data.sources) ? data.sources.filter((source: Source) => sourceValid(source) && !knownSources.has(source.url)) : [];
+      if(data.actionNotice)setNotice(data.actionNotice);
       if(userId && !data.historySaved)setNotice("This reply wasn’t saved to your account.");
       setFreshReply(Math.min(previous.length + 1, 39));
-      setMessages([...previous, { role: "user", text: question }, { role: "assistant", text: data.reply, sources }].slice(userId ? -40 : -20) as Message[]);
+      setMessages([...previous, { role: "user", text: question }, { role: "assistant", text: data.reply, sources, action: data.action || undefined }].slice(userId ? -40 : -20) as Message[]);
     } catch (failure) {
       if (controller.current !== abort) return;
       setMessages(previous); setInput(question);
@@ -163,6 +165,7 @@ function AnuPanel({ onClose, onHeight, userId, area, focus }: { onClose: () => v
       {messages.map((message, index) => {
         const references = (message.sources || []).filter(sourceValid).filter((source) => !messages.slice(0, index).some((earlier) => earlier.sources?.some((item) => item.url === source.url)));
         return <div key={index} className={`${styles.message} ${message.role === "user" ? styles.user : styles.assistant}`}><div className={styles.bubble}>{message.role === "assistant" ? <AnuReveal text={message.text} animate={index === freshReply} /> : message.text}</div>
+        {message.action&&<AnuActionCard action={message.action}/>}
         {!!references.length && <div className={styles.sources}>{references.map((source) => <a key={source.url} href={new URL(source.url).hostname === "github.com" ? source.url : new URL(source.url).pathname} className={styles.source} aria-label={`Reference: ${source.title}`}>Reference</a>)}</div>}
       </div>; })}
       {busy && <p role="status" className={styles.thinking}>Anu is thinking…</p>}
