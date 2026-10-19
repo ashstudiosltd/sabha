@@ -57,6 +57,11 @@ export async function POST(request: Request) {
       }
     }
     const { data: profile } = await db.from("profiles").select("name,username").eq("id", user.id).maybeSingle();
+    const { data: preferences } = await db.from("anu_member_preferences").select("remember,response_style").eq("user_id", user.id).maybeSingle();
+    const personalization = preferences ? {
+      remember: typeof preferences.remember === "string" ? preferences.remember.slice(0, 1500) : "",
+      responseStyle: typeof preferences.response_style === "string" ? preferences.response_style.slice(0, 1000) : "",
+    } : undefined;
     const production = process.env.NODE_ENV === "production";
     const base = new URL(process.env.ANU_API_URL?.trim() || (production ? "https://anu.devvrats.in" : "http://127.0.0.1:5173"));
     const local = !production && ["localhost", "127.0.0.1", "[::1]"].includes(base.hostname);
@@ -68,10 +73,10 @@ export async function POST(request: Request) {
       const limit=source.kind==="repository"?30000:8500;
       while(encoder.encode(source.text).length>limit)source.text=source.text.slice(0,Math.floor(source.text.length*.8))+"\n[Excerpt truncated for request size]";
     }
-    const requestSize=()=>encoder.encode(JSON.stringify({message:body.message,memberName:profile?.name||profile?.username||null,context,history})).length;
+    const requestSize=()=>encoder.encode(JSON.stringify({message:body.message,memberName:profile?.name||profile?.username||null,personalization,context,history})).length;
     while(requestSize()>62000&&history.length)history.splice(0,2);
     while(requestSize()>62000&&context.sources.length>1)context.sources.pop();
-    const response = await fetch(new URL("/api/integrations/sabha/chat", base), { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json", "x-anu-integration-key": secret }, body: JSON.stringify({ message: body.message.trim(), memberName: profile?.name || profile?.username || null, context, history }), signal: AbortSignal.timeout(55_000), redirect: "error" });
+    const response = await fetch(new URL("/api/integrations/sabha/chat", base), { method: "POST", cache: "no-store", headers: { "Content-Type": "application/json", "x-anu-integration-key": secret }, body: JSON.stringify({ message: body.message.trim(), memberName: profile?.name || profile?.username || null, personalization, context, history }), signal: AbortSignal.timeout(55_000), redirect: "error" });
     const result = await response.json().catch(() => null);
     if (!response.ok || typeof result?.reply !== "string") {
       console.warn("[sabha-anu] upstream rejected", { status: response.status, json: !!result });
