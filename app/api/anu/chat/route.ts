@@ -1,4 +1,4 @@
-import { draftUsesAllowedSources, parseActionDraft, prepareAction } from "@/lib/anu/actions";
+import { draftUsesAllowedSources, explicitlyRequestsPublication, isAnuFeedAction, parseActionDraft, prepareAction, publishAsAnu } from "@/lib/anu/actions";
 import { anuRequestAllowed } from "@/lib/anu/request-access";
 import { repositoryContext } from "@/lib/anu/repository";
 import { createClient } from "@/lib/supabase/server";
@@ -11,13 +11,14 @@ const visits = new Map<string, { count: number; reset: number }>();
 export async function POST(request: Request) {
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
-  if (!user) return json({ error: "Sign in to use your personal Anu." }, 401);
-  if (!anuRequestAllowed(request,user.id)) return json({ error: "Invalid request origin or account." },403);
+  if (user && !anuRequestAllowed(request,user.id)) return json({ error: "Invalid request origin or account." },403);
+  if (!user && request.headers.get("origin") !== new URL(request.url).origin) return json({ error: "Invalid request origin." },403);
+  const rateKey = user?.id || `public:${request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"}`;
   const now = Date.now();
   for (const [id, visit] of visits) if (visit.reset <= now) visits.delete(id);
-  const visit = visits.get(user.id) || { count: 0, reset: now + 600_000 };
-  if (visit.count >= 20 || (!visits.has(user.id) && visits.size >= 10_000)) return json({ error: "Please give Anu a moment before trying again." }, 429);
-  visit.count++; visits.set(user.id, visit);
+  const visit = visits.get(rateKey) || { count: 0, reset: now + 600_000 };
+  if (visit.count >= 20 || (!visits.has(rateKey) && visits.size >= 10_000)) return json({ error: "Please give Anu a moment before trying again." }, 429);
+  visit.count++; visits.set(rateKey, visit);
   try {
     const raw = await request.text();
     if (new TextEncoder().encode(raw).length > 40_000) return json({ error: "Please shorten your conversation." }, 413);
@@ -28,14 +29,14 @@ export async function POST(request: Request) {
     if (body.turnId != null && !uuid.test(body.turnId)) return json({ error: "Invalid conversation turn." }, 400);
     if (body.scope != null && (typeof body.scope !== "string" || !/^[a-z0-9:-]{1,120}$/i.test(body.scope))) return json({ error: "Invalid conversation." }, 400);
     if (body.focus && (!uuid.test(body.focus.id || "") || !["project", "blog", "feed", "clan", "notification"].includes(body.focus.kind))) return json({ error: "This reference is invalid." }, 400);
-    const context = await retrieveContext(db, user.id, body.message, body.focus);
-    if (body.focus?.kind === "project") {
+    const context = await retrieveContext(db, user?.id ?? null, body.message, body.focus);
+    if (user && body.focus?.kind === "project") {
       const repository = await repositoryContext(db,user.id,body.focus.id,body.message);
       if(repository.source) context.sources = [context.sources[0],repository.source,...context.sources.slice(1,5)].filter((source): source is NonNullable<typeof source> => !!source);
       context.coverage += ` Repository: ${repository.status}`;
     }
     // A unique project match can provide repository context without a page focus.
-    if (!body.focus) {
+    if (user && !body.focus) {
       const projects=context.sources.filter(source=>source.kind==="project");
       if(projects.length===1 && /repository|repo|code|commit|issue|pull request|architecture|implementation/i.test(body.message)) {
         const repository=await repositoryContext(db,user.id,projects[0].id,body.message);
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
       }
     }
     const history: Array<{role: "user" | "assistant"; text: string}> = [];
-    if (body.scope) {
+    if (user && body.scope) {
       const { data: turns } = await db.from("anu_conversation_turns").select("question,answer,context_sources").eq("user_id", user.id).eq("scope", body.scope).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(4);
       const fresh = new Set(context.sources.map(source => `${source.kind}:${source.id}`));
       let size = 0;
@@ -56,8 +57,8 @@ export async function POST(request: Request) {
         size += turn.question.length + turn.answer.length;
       }
     }
-    const { data: profile } = await db.from("profiles").select("name,username").eq("id", user.id).maybeSingle();
-    const { data: preferences } = await db.from("anu_member_preferences").select("remember,response_style").eq("user_id", user.id).maybeSingle();
+    const { data: profile } = user ? await db.from("profiles").select("name,username").eq("id", user.id).maybeSingle() : { data: null };
+    const { data: preferences } = user ? await db.from("anu_member_preferences").select("remember,response_style").eq("user_id", user.id).maybeSingle() : { data: null };
     const personalization = preferences ? {
       remember: typeof preferences.remember === "string" ? preferences.remember.slice(0, 1500) : "",
       responseStyle: typeof preferences.response_style === "string" ? preferences.response_style.slice(0, 1000) : "",
@@ -101,19 +102,21 @@ export async function POST(request: Request) {
     const ids: unknown[] = Array.isArray(result.referenceIds) ? result.referenceIds : [];
     const sources = [...new Set(ids.filter((id): id is string => typeof id === "string"))].flatMap(id => { const s = allowed.get(id); return s ? [{ id: s.id, kind: s.kind, title: s.title, url: s.url }, ...(s.references || []).slice(0,5).map(ref => ({ id:s.id,kind:s.kind,title:ref.title,url:ref.url }))] : []; }).slice(0,6);
     let action = null;
+    let published = null;
     let actionNotice: string | undefined;
-    if (result.actionDraft) {
+    if (result.actionDraft && user) {
       try {
         const draft=parseActionDraft(result.actionDraft);
         if(!draftUsesAllowedSources(draft,context.sources))throw new Error("Choose an accessible destination before preparing this action.");
-        action=await prepareAction(db,user.id,draft);
+        if(isAnuFeedAction(draft)&&explicitlyRequestsPublication(body.message))published=await publishAsAnu(db,user.id,draft);
+        else action=await prepareAction(db,user.id,draft);
       } catch(error) { actionNotice=error instanceof Error?error.message:"This action needs more details before it can be prepared."; }
-    }
+    } else if(result.actionDraft&&!user) actionNotice="Sign in with Devvrats to let Anu act in Sabha.";
     let historySaved = false;
-    if (body.turnId && body.scope) {
+    if (user && body.turnId && body.scope) {
       const { error } = await db.from("anu_conversation_turns").insert({ id: body.turnId, user_id: user.id, scope: body.scope, question: body.message.trim(), answer: result.reply, sources, context_sources: context.sources.map(({ id, kind }) => ({ id, kind })) });
       historySaved = !error;
     }
-    return json({ reply: result.reply, sources, historySaved, action, actionNotice, focusUnavailable: context.focusUnavailable });
+    return json({ reply: result.reply, sources, historySaved, action, published, actionNotice, focusUnavailable: context.focusUnavailable });
   } catch (error) { console.warn("[sabha-anu] connection failed", { kind: error instanceof Error ? error.name : "UnknownError" }); return json({ error: "Anu couldn’t connect just now. Please try again." }, 503); }
 }

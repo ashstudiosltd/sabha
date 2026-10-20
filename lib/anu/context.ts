@@ -13,20 +13,28 @@ const areas = [
   { table: "notifications", kind: "notification", fields: "id,title,message,created_at", search: ["title", "message"], date: "created_at" },
 ];
 /** All reads use the member's Supabase session and existing RLS; no service-role client. */
-export async function retrieveContext(db: Awaited<ReturnType<typeof createClient>>, userId: string, message: string, focus?: { kind: string; id: string }) {
+export async function retrieveContext(db: Awaited<ReturnType<typeof createClient>>, userId: string | null, message: string, focus?: { kind: string; id: string }) {
   const words = searchWords(message);
   const unavailable: string[] = [];
   const sources: AnuSource[] = [];
   const records = new Map<AnuSource, Record<string, unknown>>();
   const groups = await Promise.all(areas.map(async area => {
+    if (!userId && area.kind === "notification") return { data: [], error: null };
+    if (!userId && area.kind === "feed") {
+      return db.rpc("get_public_feed_for_anu", {
+        p_search_terms: words,
+        p_focus_id: focus?.kind === "feed" ? focus.id : null,
+        p_limit: 6,
+      });
+    }
     let query = db.from(area.table).select(area.fields);
-    if (area.kind === "project" && /\b(my|our)\b.*\bprojects?\b|\bprojects?\b.*\bmine\b/i.test(message)) {
+    if (userId && area.kind === "project" && /\b(my|our)\b.*\bprojects?\b|\bprojects?\b.*\bmine\b/i.test(message)) {
       const memberships=await db.from("project_members").select("project_id").eq("profile_id",userId).limit(200);
       if(memberships.error)unavailable.push("project:memberships");
       const ids=(memberships.data||[]).map(row=>row.project_id).filter((id:unknown)=>typeof id==="string"&&uuid.test(id));
       query=query.or(`owner_id.eq.${userId}${ids.length?`,id.in.(${ids.join(",")})`:""}`);
     }
-    if (area.kind === "clan" && /\b(my|our)\b.*\bclans?\b|\bclans?\b.*\bmine\b/i.test(message)) {
+    if (userId && area.kind === "clan" && /\b(my|our)\b.*\bclans?\b|\bclans?\b.*\bmine\b/i.test(message)) {
       const memberships=await db.from("clan_members").select("clan_id").eq("user_id",userId).limit(200);
       if(memberships.error)unavailable.push("clan:memberships");
       const ids=(memberships.data||[]).map(row=>row.clan_id).filter((id:unknown)=>typeof id==="string"&&uuid.test(id));
@@ -34,7 +42,7 @@ export async function retrieveContext(db: Awaited<ReturnType<typeof createClient
       query=query.in("id",ids);
     }
     if ((area.kind === "project" || area.kind === "clan") && /\bprivate\b/i.test(message)) query = query.eq("visibility", "private");
-    if (area.kind === "notification") query = query.eq("recipient_id", userId);
+    if (area.kind === "notification" && userId) query = query.eq("recipient_id", userId);
     if (words.length) query = query.or(words.flatMap(word => area.search.map(field => `${field}.ilike.%${word}%`)).join(","));
     return query.order(area.date, { ascending: false }).limit(20);
   }));
@@ -42,7 +50,7 @@ export async function retrieveContext(db: Awaited<ReturnType<typeof createClient
     const area = areas[index], result = groups[index];
     if (result.error) { unavailable.push(area.kind); continue; }
     const rows = [...(result.data || [])] as unknown as Array<Record<string, unknown>>;
-    if (focus?.kind === area.kind && !rows.some(row => row.id === focus.id)) {
+    if (userId && focus?.kind === area.kind && !rows.some(row => row.id === focus.id)) {
       let query = db.from(area.table).select(area.fields).eq("id", focus.id);
       if (area.kind === "notification") query = query.eq("recipient_id", userId);
       const selected = await query.maybeSingle();
@@ -78,6 +86,7 @@ export async function retrieveContext(db: Awaited<ReturnType<typeof createClient
       requests.push({ name: "contribution_guide", query: db.from("project_contribution_guides").select("overview,setup,first_steps,updated_at").eq("project_id", source.id).maybeSingle() });
     }
     const related: Record<string, unknown> = {};
+    if (source.kind === "feed" && !userId) related.discussion = records.get(source)?.discussion;
     await Promise.all(requests.map(async ({ name, query }) => { const result = await query; if (result.error) unavailable.push(`${source.kind}:${name}`); else related[name] = result.data; }));
     const identities=new Set<string>();
     const collect=(value:unknown)=>{if(!value||typeof value!=="object")return;for(const key of ["author_id","user_id","owner_id"]){const id=(value as Record<string,unknown>)[key];if(typeof id==="string"&&uuid.test(id))identities.add(id);}};
