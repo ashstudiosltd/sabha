@@ -57,12 +57,13 @@ export async function POST(request: Request) {
         size += turn.question.length + turn.answer.length;
       }
     }
-    const { data: profile } = user ? await db.from("profiles").select("name,username").eq("id", user.id).maybeSingle() : { data: null };
+    const { data: profile } = user ? await db.from("profiles").select("name,username,bio,role,skills,interests").eq("id", user.id).maybeSingle() : { data: null };
     const { data: preferences } = user ? await db.from("anu_member_preferences").select("remember,response_style").eq("user_id", user.id).maybeSingle() : { data: null };
-    const personalization = preferences ? {
-      remember: typeof preferences.remember === "string" ? preferences.remember.slice(0, 1500) : "",
-      responseStyle: typeof preferences.response_style === "string" ? preferences.response_style.slice(0, 1000) : "",
-    } : undefined;
+    const personalization = {
+      remember: typeof preferences?.remember === "string" ? preferences.remember.slice(0, 1500) : "",
+      responseStyle: typeof preferences?.response_style === "string" ? preferences.response_style.slice(0, 1000) : "",
+      profile: { introduction: (profile?.bio || "").slice(0, 500), role: (profile?.role || "").slice(0, 80), skills: (profile?.skills || "").slice(0, 500), interests: (profile?.interests || "").slice(0, 500) },
+    };
     const production = process.env.NODE_ENV === "production";
     const base = new URL(process.env.ANU_API_URL?.trim() || (production ? "https://anu.devvrats.in" : "http://127.0.0.1:5173"));
     const local = !production && ["localhost", "127.0.0.1", "[::1]"].includes(base.hostname);
